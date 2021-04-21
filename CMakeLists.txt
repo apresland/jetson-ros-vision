@@ -24,11 +24,19 @@ endif()
 
 set(common_src src/ros_define.cpp)
 
+# nodes
 add_executable(gstr_camera src/node_gstr_camera.cpp ${common_src})
 target_link_libraries(gstr_camera ${catkin_LIBRARIES})
 
+add_executable(opengl_display src/node_opengl_display.cpp ${common_src})
+target_link_libraries(opengl_display ${catkin_LIBRARIES})
+
+# dependencies
 ament_target_dependencies(gstr_camera rclcpp std_msgs sensor_msgs vision_msgs)
 install(TARGETS gstr_camera DESTINATION lib/${PROJECT_NAME})
+
+ament_target_dependencies(opengl_display rclcpp std_msgs sensor_msgs vision_msgs)
+install(TARGETS opengl_display DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 

@@ -1,0 +1,3 @@
+<launch>
+	<node pkg="jetson-ros-vision" exec="opengl_display"></node>
+</launch>

@@ -1,6 +1,10 @@
+#
 # colcon build artefacts
+#
 build/
 install/
 
+#
 # ros2 transient outputs
+#
 log/
