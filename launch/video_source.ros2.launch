@@ -1,0 +1,3 @@
+<launch>
+	<node pkg="jetson-ros-vision" exec="gstr_camera"></node>
+</launch>
