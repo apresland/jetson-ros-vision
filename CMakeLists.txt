@@ -31,10 +31,12 @@ else()
 endif()
 
 # nodes
-add_executable(camera src/gstcamera.cpp src/gstcameranode.cpp src/imageconverter.cpp src/cudayuv.cu src/cudargb.cu)
+add_executable(camera src/camera/cameranode.cpp src/camera/gstcamera.cpp src/cuda/imageconverter.cpp src/cuda/cudayuv.cu src/cuda/cudargb.cu)
+target_include_directories(camera PRIVATE src/cuda src/camera)
 target_link_libraries(camera GL GLU GLEW gstreamer-1.0 gstapp-1.0 gstpbutils-1.0 gobject-2.0 ${catkin_LIBRARIES} ${CUDA_LIBRARIES})
 
-add_executable(display src/viewstream.cpp src/displaynode.cpp src/imageconverter.cpp src/cudargb.cu src/cudapixelbufferinterop.cpp src/gltexture.cpp src/glpixelbuffer.cpp)
+add_executable(display src/display/displaynode.cpp src/display/viewstream.cpp src/cuda/imageconverter.cpp src/cuda/cudargb.cu src/cuda/cudapixelbufferinterop.cpp src/gl/gltexture.cpp src/gl/glpixelbuffer.cpp)
+target_include_directories(display PRIVATE src/cuda src/gl)
 target_link_libraries(display GL GLU GLEW X11 ${catkin_LIBRARIES} ${CUDA_LIBRARIES})
 
 # dependencies

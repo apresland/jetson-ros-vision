@@ -2,7 +2,7 @@
 #ifndef __ROS_DEEP_LEARNING_IMAGE_CONVERTER_H_
 #define __ROS_DEEP_LEARNING_IMAGE_CONVERTER_H_
 
-#include "cuda.h"
+#include "cuda_runtime.h"
 #include "rclcpp/rclcpp.hpp"
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/image_encodings.hpp>

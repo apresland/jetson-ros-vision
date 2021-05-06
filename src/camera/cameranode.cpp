@@ -1,6 +1,6 @@
 #include <memory>
-#include "gstcamera.h"
 #include "rclcpp/rclcpp.hpp"
+#include "gstcamera.h"
 
 class VideoPublisher : public rclcpp::Node 
 {
