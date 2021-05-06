@@ -1,8 +1,11 @@
 #include "cudapixelbufferinterop.h"
 #include "cudamappedmemory.h"
 
-CUDAPixelBufferInterop::CUDAPixelBufferInterop(std::unique_ptr<GLPixelBuffer> &gl_pixel_buffer) :
-    gl_pixel_buffer_(gl_pixel_buffer)
+CUDAPixelBufferInterop::CUDAPixelBufferInterop(
+	rclcpp::Node *node,
+	std::unique_ptr<GLPixelBuffer> &gl_pixel_buffer)
+	 : node_(node),
+	   gl_pixel_buffer_(gl_pixel_buffer)
 {
     cudaGraphicsResource* cudaGLBufferPtr = NULL;
 
@@ -18,15 +21,10 @@ CUDAPixelBufferInterop::~CUDAPixelBufferInterop()
 	{
 		if(cudaSuccess != cudaGraphicsUnregisterResource(cuda_buffer_))
 		{
-			// log error
+			RCLCPP_ERROR(node_->get_logger(), "CudaInterop -- failed to unregister graphics resource.");
 		}
 		cuda_buffer_ = NULL;
 	}    
-}
-
-std::unique_ptr<CUDAPixelBufferInterop> CUDAPixelBufferInterop::Create(std::unique_ptr<GLPixelBuffer> &gl_pixel_buffer) 
-{
-    return std::make_unique<CUDAPixelBufferInterop>(gl_pixel_buffer);
 }
 
 void CUDAPixelBufferInterop::Render(void* image, uint32_t size)
@@ -38,7 +36,7 @@ void CUDAPixelBufferInterop::Render(void* image, uint32_t size)
 	{
 		if(cudaSuccess != cudaMemcpy(cudaInteropBuffer, image, size, cudaMemcpyDeviceToDevice))
 		{
-			//log error
+			RCLCPP_ERROR(node_->get_logger(), "CudaInterop -- failed to render image.");
 		}
 		this->Unmap();
 	}
@@ -56,7 +54,7 @@ void* CUDAPixelBufferInterop::Map()
 
 	if(cudaSuccess != cudaGraphicsResourceSetMapFlags(cuda_buffer_, cudaGraphicsRegisterFlagsWriteDiscard))
 	{
-
+		RCLCPP_ERROR(node_->get_logger(), "CudaInterop -- failed to set memory mapping flags.");
 	}
 
 	if( cudaSuccess != cudaGraphicsMapResources(1, &cuda_buffer_) )
@@ -70,7 +68,7 @@ void* CUDAPixelBufferInterop::Map()
 	{
 		if(cudaSuccess != cudaGraphicsUnmapResources(1, &cuda_buffer_))
 		{
-			// log error
+			RCLCPP_ERROR(node_->get_logger(), "CudaInterop -- failed to release graphics resource after mapping failure.");
 		}
 		return NULL;
 	}
@@ -86,7 +84,7 @@ void CUDAPixelBufferInterop::Unmap()
 	// CUDA buffer unmap
 	if (cudaSuccess != cudaGraphicsUnmapResources(1, &cuda_buffer_))
 	{
-		// log error
+		RCLCPP_ERROR(node_->get_logger(), "CudaInterop -- failed to release graphics resource.");
 	}
 	
 	// OpenGL named buffer unmap

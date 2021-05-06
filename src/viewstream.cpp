@@ -70,7 +70,7 @@ ViewStream* ViewStream::Create(rclcpp::Node *node)
 		
 	if( !viewStream->Init() )
 	{
-		//LogError(LOG_GL "failed to create X11 Window.\n");
+		RCLCPP_INFO(node_->get_logger(),  "ViewStream -- failed to create X11 Window.");
 		delete viewStream;
 		return NULL;
 	}
@@ -79,12 +79,12 @@ ViewStream* ViewStream::Create(rclcpp::Node *node)
 	
 	if (GLEW_OK != err)
 	{
-		//LogError(LOG_GL "GLEW Error: %s\n", glewGetErrorString(err));
+		RCLCPP_INFO(node_->get_logger(), "ViewStream -- OpenGL extension initialization failure: %s", glewGetErrorString(err));
 		delete viewStream;
 		return NULL;
 	}
 
-	//RCLCPP_INFO(node_->get_logger(), "glDisplay -- display device initialized (%ux%u)\n", vp->GetWidth(), vp->GetHeight());
+	RCLCPP_INFO(node_->get_logger(), "ViewStream -- video stream display initialized.");
 	return viewStream;
 }
 
@@ -93,19 +93,19 @@ bool ViewStream::Init()
 {
 	if( ! CreateDisplay() )
 	{
-		//LogError(LOG_GL "InitWindow() - no X11 server connection.\n" );
+		RCLCPP_INFO(node_->get_logger(), "ViewStream -- no X11 server connection." );
 		return false;
 	}
 	
 	if( ! CreateScreen(display_) )
 	{
-		//LogError(LOG_GL "failed to retrieve default Screen instance\n");
+		RCLCPP_INFO(node_->get_logger(), "ViewStream -- failed to retrieve default screen.");
 		return false;
 	}
 	
 	if( ! CreateVisual(display_, screen_) )
 	{
-		//LogError(LOG_GL "failed to retrieve default Visual instance\n");
+		RCLCPP_INFO(node_->get_logger(), "ViewStream -- failed to retrieve default visual.");
 		return false;
 	}
 
@@ -121,8 +121,16 @@ bool ViewStream::Init()
 						CWBorderPixel|CWColormap|CWEventMask, &winAttr);
 
 	context_ = glXCreateContext(display_, visual_, 0, True);
-
 	glXMakeCurrent(display_, window_, context_);
+
+	GLenum err = glewInit();
+
+	if (GLEW_OK != err)
+	{
+		RCLCPP_INFO(node_->get_logger(), "ViewStream -- OpenGL extension initialization failure: %s", glewGetErrorString(err));
+		return false;
+	}
+
 	streaming_ = true;
 	
 	return true;

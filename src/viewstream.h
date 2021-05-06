@@ -16,17 +16,17 @@ class ViewStream
 {
 
 public:
-	static ViewStream* Create(rclcpp::Node *node);
+	ViewStream* Create(rclcpp::Node *node);
 
+	ViewStream(rclcpp::Node *node);
 	~ViewStream();
 
+	bool Init();
 	virtual bool Open();
 	virtual bool Render( void* image, uint32_t width, uint32_t height);
 
 private:
-	ViewStream(rclcpp::Node *node);
-		
-	bool Init();
+
 	bool CreateDisplay();
 	bool CreateScreen(Display* display);
 	bool CreateVisual(Display* display, Screen* screen);

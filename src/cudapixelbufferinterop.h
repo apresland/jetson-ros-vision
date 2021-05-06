@@ -4,19 +4,18 @@
 #include <memory>
 #include <GL/glx.h>
 #include <cuda_gl_interop.h>
-
+#include "rclcpp/rclcpp.hpp"
 #include "glpixelbuffer.h"
 
 class CUDAPixelBufferInterop {
 
     public:
-    CUDAPixelBufferInterop(std::unique_ptr<GLPixelBuffer> &glPixelBuffer);
+    CUDAPixelBufferInterop(
+        rclcpp::Node *node,
+        std::unique_ptr<GLPixelBuffer> &glPixelBuffer);
 
     public:
     ~CUDAPixelBufferInterop();
-
-    public:
-    static std::unique_ptr<CUDAPixelBufferInterop> Create(std::unique_ptr<GLPixelBuffer> &gl_pixel_buffer);
 
     public:
     cudaGraphicsResource* GraphicsResource() {return cuda_buffer_;}
@@ -30,6 +29,7 @@ class CUDAPixelBufferInterop {
     void Unmap();
 
     private:
+    rclcpp::Node *node_;
     std::unique_ptr<GLPixelBuffer> &gl_pixel_buffer_;
     cudaGraphicsResource* cuda_buffer_;
 };

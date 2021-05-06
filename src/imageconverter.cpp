@@ -57,7 +57,6 @@ void imageConverter::Free()
 
 bool imageConverter::Convert( const sensor_msgs::msg::Image::Ptr& input )
 {
-	//ROS_DEBUG("converting %ux%u %s image", input->width, input->height, input->encoding.c_str());
 	const size_t image_format_size = (input->width * input->height * sizeof(uchar3) * 8) / 8;
 
 	// assure memory allocation
@@ -70,7 +69,7 @@ bool imageConverter::Convert( const sensor_msgs::msg::Image::Ptr& input )
 	// convert image format
 	if( cudaSuccess != cudaRGB8ToBGR8((uchar3*)input_gpu_, (uchar3*)output_gpu_, input->width, input->height))
 	{
-		//ROS_ERROR("failed to convert %ux%u image (from %s to %s) with CUDA", width_, height_, imageFormatToStr(input_format), imageFormatToStr(InternalFormat));
+		RCLCPP_ERROR(node_->get_logger(), "ImageConvert -- failed to convert BGR -> RGB with CUDA");
 		return false;
 	}
 
@@ -87,7 +86,7 @@ bool imageConverter::Convert( sensor_msgs::msg::Image& msg, uchar3* imageGPU )
 	// in this direction, we reverse use of input/output pointers
     if ( cudaSuccess != cudaRGB8ToBGR8((uchar3*)imageGPU, (uchar3*)input_gpu_, width_, height_))
     {
-	    std::cout << "failed to convert RGB -> BGR" << std::endl;
+		RCLCPP_ERROR(node_->get_logger(), "ImageConvert -- failed to convert RGB -> BGR with CUDA");
 		return false;
     }
 

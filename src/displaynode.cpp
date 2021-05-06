@@ -14,16 +14,18 @@ class VideoDisplay  : public rclcpp::Node {
             std::bind(&VideoDisplay::subscription_callback, this, _1));
 
         RCLCPP_INFO(this->get_logger(), "opening video output stream: %s");
-        stream_ = ViewStream::Create(this);
-        
-        if( !stream_ )
-        {
-            RCLCPP_INFO(this->get_logger(), "failed to open video output stream");
-        }
 
-        if( !stream_->Open() )
+        //stream_ = ViewStream::Create(this);
+        stream_ = new ViewStream(this);
+
+        if( ! stream_->Init() )
         {
-            RCLCPP_INFO(this->get_logger(), "failed to open video viewer");
+            RCLCPP_INFO(this->get_logger(), "failed to initialize video output stream");
+        }      
+
+        if( ! stream_->Open() )
+        {
+            RCLCPP_INFO(this->get_logger(), "failed to open video output display");
         }
 
         image_converter_ = new imageConverter(this);
