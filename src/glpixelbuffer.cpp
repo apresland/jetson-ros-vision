@@ -84,7 +84,7 @@ void GLPixelBuffer::Map()
 void GLPixelBuffer::Unmap()
 {
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, id_);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width_, height_, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width_, height_, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 }
 

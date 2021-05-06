@@ -63,7 +63,7 @@ bool GstCamera::Create() {
         RCLCPP_INFO(node_->get_logger(), "Gstreamer initialized");
     }
 
-    GError* err = NULL;
+    GError* err = nullptr;
     RCLCPP_INFO(node_->get_logger(), "gstCamera -- attempting to create device");
     
     // build pipeline string
@@ -76,7 +76,7 @@ bool GstCamera::Create() {
     // launch pipeline
     pipeline_ = gst_parse_launch(launchstr_.c_str(), &err);
 
-    if( err != NULL )
+    if( err != nullptr )
     {
         RCLCPP_INFO(node_->get_logger(), "gstCamera failed to create pipeline");
         RCLCPP_INFO(node_->get_logger(), "   (%s)", err->message);
@@ -119,7 +119,7 @@ bool GstCamera::Create() {
     cb.new_preroll = on_preroll;
     cb.new_sample  = on_new_sample;
 
-    gst_app_sink_set_callbacks(sink_, &cb, (void*)this, NULL);
+    gst_app_sink_set_callbacks(sink_, &cb, (void*)this, nullptr);
     RCLCPP_INFO(node_->get_logger(), "created pipeline");
 
     return true;
@@ -171,7 +171,7 @@ void GstCamera::Acquire() {
 	
 	if( !gstSample )
 	{
-		RCLCPP_INFO(node_->get_logger(), "gstCamera -- gst_app_sink_pull_sample() returned NULL...");
+		RCLCPP_INFO(node_->get_logger(), "gstCamera -- gst_app_sink_pull_sample() returned nullptr...");
         gst_sample_unref(gstSample);
 		return;
 	}
@@ -180,7 +180,7 @@ void GstCamera::Acquire() {
 	
 	if( !gstBuffer )
 	{
-		RCLCPP_INFO(node_->get_logger(), "gstCamera -- gst_sample_get_buffer() returned NULL...");
+		RCLCPP_INFO(node_->get_logger(), "gstCamera -- gst_sample_get_buffer() returned nullptr...");
         gst_sample_unref(gstSample);
 		return;
 	}
@@ -200,7 +200,7 @@ void GstCamera::Acquire() {
 	
 	if( !gstData )
 	{
-		RCLCPP_INFO(node_->get_logger(), "gstCamera -- gst_buffer_map had NULL data pointer...");
+		RCLCPP_INFO(node_->get_logger(), "gstCamera -- gst_buffer_map had nullptr data pointer...");
         gst_sample_unref(gstSample);
 		return;
 	}
@@ -215,7 +215,7 @@ void GstCamera::Acquire() {
 	
 	if( !gstCaps )
 	{
-		RCLCPP_INFO(node_->get_logger(), "gstCamera -- gst_buffer had NULL caps...");
+		RCLCPP_INFO(node_->get_logger(), "gstCamera -- gst_buffer had nullptr caps...");
         gst_sample_unref(gstSample);
 		return;
 	}
@@ -224,7 +224,7 @@ void GstCamera::Acquire() {
 	
 	if( !gstCapsStruct )
 	{
-		RCLCPP_INFO(node_->get_logger(), "gstCamera -- caps had NULL structure...");
+		RCLCPP_INFO(node_->get_logger(), "gstCamera -- caps had nullptr structure...");
         gst_sample_unref(gstSample);
 		return;
 	}

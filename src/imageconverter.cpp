@@ -14,10 +14,10 @@ imageConverter::imageConverter(rclcpp::Node *node)
 	size_input_   = 0;
 	size_output_  = 0;
 
-	input_cpu_ = NULL;
-	input_gpu_ = NULL;
-	output_cpu_ = NULL;
-	output_gpu_ = NULL;
+	input_cpu_  = nullptr;
+	input_gpu_  = nullptr;
+	output_cpu_ = nullptr;
+	output_gpu_ = nullptr;
 }
 
 
@@ -31,26 +31,26 @@ imageConverter::~imageConverter()
 // Free
 void imageConverter::Free()
 {
-	if( input_cpu_ != NULL )
+	if( input_cpu_ != nullptr )
 	{
 		if( cudaSuccess != cudaFreeHost(input_cpu_))
 		{
 			// log error
 		}
 
-		input_cpu_ = NULL;
-		input_gpu_ = NULL;
+		input_cpu_ = nullptr;
+		input_gpu_ = nullptr;
 	}
 
-	if( output_cpu_ != NULL )
+	if( output_cpu_ != nullptr )
 	{
 		if( cudaSuccess != cudaFreeHost(output_cpu_))
 		{
 			// log errorr
 		}
 
-		output_cpu_ = NULL;
-		output_gpu_ = NULL;
+		output_cpu_ = nullptr;
+		output_gpu_ = nullptr;
 	}
 }
 

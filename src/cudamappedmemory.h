@@ -22,8 +22,8 @@ inline bool cudaAllocMapped( void** cpuPtr, void** gpuPtr, size_t size )
 
 inline bool cudaAllocMapped( void** ptr, size_t size )
 {
-	void* cpuPtr = NULL;
-	void* gpuPtr = NULL;
+	void* cpuPtr = nullptr;
+	void* gpuPtr = nullptr;
 
 	if( ! ptr || size == 0 )
 		return false;

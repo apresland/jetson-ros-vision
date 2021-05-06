@@ -6,7 +6,7 @@
 
 CUDAColorConversionBuffer::CUDAColorConversionBuffer() {
 	threaded_ = true;
-	buffers_ = NULL;
+	buffers_ = nullptr;
 	size_ = 0;
 	read_index_ = 0;
 	write_index_ = 0;
@@ -17,9 +17,9 @@ CUDAColorConversionBuffer::~CUDAColorConversionBuffer() {
 
 	MFree();
 	
-	if( buffers_ != NULL ) {
+	if( buffers_ != nullptr ) {
 		free(buffers_);
-		buffers_ = NULL;
+		buffers_ = nullptr;
 	}
 }
 
@@ -30,13 +30,13 @@ inline bool CUDAColorConversionBuffer::Allocate(size_t size)
 	
 	MFree();
 	
-	if( buffers_ != NULL )
+	if( buffers_ != nullptr )
 	{
 		free(buffers_);
-		buffers_ = NULL;
+		buffers_ = nullptr;
 	}
 
-	if( buffers_ == NULL )
+	if( buffers_ == nullptr )
 	{
 		const size_t bufferListSize = number_of_buffers * sizeof(void*);
 		buffers_ = (void**)malloc(bufferListSize);
@@ -47,13 +47,12 @@ inline bool CUDAColorConversionBuffer::Allocate(size_t size)
 	{
         if( ! cudaAllocMapped(&buffers_[n], size) )
         {
-            //LogError("VideoBuffer -- failed to allocate zero-copy buffer of %zu bytes\n", size);
+
             return false;
         }
 
 	}
 		
-	//LogVerbose("RingBuffer -- allocated %u buffers (%zu bytes each, %zu bytes total)\n", numBuffers, size, size * numBuffers);
 	size_ = size;
 	
 	return true;
@@ -70,7 +69,7 @@ inline void CUDAColorConversionBuffer::MFree()
 		{
 			// log error
 		}
-		buffers_[n] = NULL;
+		buffers_[n] = nullptr;
 	}
 }
 
@@ -78,8 +77,7 @@ inline void* CUDAColorConversionBuffer::Peek()
 {
 	if( !buffers_ )
 	{
-		//LogError("RingBuffer::Peek() -- error, must call RingBuffer::Alloc() first\n");
-		return NULL;
+		return nullptr;
 	}
 
 	if( threaded_ )
@@ -92,8 +90,7 @@ inline void* CUDAColorConversionBuffer::Peek()
 
 	if( bufferIndex < 0 )
 	{
-		//LogError("RingBuffer::Peek() -- error, invalid flags (must be Write or Read flags)\n");
-		return NULL;
+		return nullptr;
 	}
 
 	return buffers_[bufferIndex];
@@ -103,8 +100,7 @@ inline void* CUDAColorConversionBuffer::Read()
 {
 	if( !buffers_ )
 	{
-		//LogError("RingBuffer::Next() -- error, must call RingBuffer::Alloc() first\n");
-		return NULL;
+		return nullptr;
 	}
 
     if( read_once_ )
@@ -112,7 +108,7 @@ inline void* CUDAColorConversionBuffer::Read()
 		if( threaded_ )
 			mutex_.unlock();
 
-		return NULL;
+		return nullptr;
 	}
 
 	int index = -1;	
@@ -126,7 +122,7 @@ inline void* CUDAColorConversionBuffer::Read()
 	if( index < 0 )
 	{
 		//LogError("RingBuffer::Next() -- error, invalid flags (must be Write or Read flags)\n");
-		return NULL;
+		return nullptr;
 	}
 
 	return buffers_[index];
@@ -137,7 +133,7 @@ inline void* CUDAColorConversionBuffer::Write()
 	if( !buffers_ )
 	{
 		//LogError("RingBuffer::Next() -- error, must call RingBuffer::Alloc() first\n");
-		return NULL;
+		return nullptr;
 	}
 
 	if( threaded_ )
@@ -154,7 +150,7 @@ inline void* CUDAColorConversionBuffer::Write()
 	if( index < 0 )
 	{
 		//LogError("RingBuffer::Next() -- error, invalid flags (must be Write or Read flags)\n");
-		return NULL;
+		return nullptr;
 	}
 
 	return buffers_[index];

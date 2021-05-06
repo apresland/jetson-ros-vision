@@ -27,10 +27,10 @@ ViewStream::ViewStream(rclcpp::Node *node)
 	node_ = node;
 
 	window_       = 0;
-	screen_       = NULL;
-	visual_       = NULL;
-	context_  = NULL;
-	display_      = NULL;
+	screen_       = nullptr;
+	visual_       = nullptr;
+	context_  	  = nullptr;
+	display_      = nullptr;
 	initialized_  = false;
 
 	bgcolor_[0]    = 0.0f;
@@ -43,16 +43,16 @@ ViewStream::ViewStream(rclcpp::Node *node)
 // Destructor
 ViewStream::~ViewStream()
 {
-	if ( viewStream != NULL )
+	if ( viewStream != nullptr )
 	{
 		delete viewStream;
-		viewStream = NULL;
+		viewStream = nullptr;
 	}
 
-	if( texture_ != NULL )
+	if( texture_ != nullptr )
 	{
 		delete texture_;
-		texture_ = NULL;
+		texture_ = nullptr;
 	}
 
 	// destroy the OpenGL context
@@ -66,13 +66,13 @@ ViewStream* ViewStream::Create(rclcpp::Node *node)
 	viewStream = new ViewStream(node);
 	
 	if( !viewStream )
-		return NULL;
+		return nullptr;
 		
 	if( !viewStream->Init() )
 	{
 		RCLCPP_INFO(node_->get_logger(),  "ViewStream -- failed to create X11 Window.");
 		delete viewStream;
-		return NULL;
+		return nullptr;
 	}
 	
 	GLenum err = glewInit();
@@ -81,7 +81,7 @@ ViewStream* ViewStream::Create(rclcpp::Node *node)
 	{
 		RCLCPP_INFO(node_->get_logger(), "ViewStream -- OpenGL extension initialization failure: %s", glewGetErrorString(err));
 		delete viewStream;
-		return NULL;
+		return nullptr;
 	}
 
 	RCLCPP_INFO(node_->get_logger(), "ViewStream -- video stream display initialized.");
@@ -141,7 +141,7 @@ bool ViewStream::CreateDisplay()
 	if( !display_ )
 		display_ = XOpenDisplay(0);
 
-	return display_ != NULL ? true : false;	
+	return display_ != nullptr ? true : false;	
 }
 
 bool ViewStream::CreateScreen(Display* display) 
@@ -149,7 +149,7 @@ bool ViewStream::CreateScreen(Display* display)
 	if ( !screen_ )
 		screen_ = XScreenOfDisplay(display, screenIdx);
 
-	return screen_ != NULL ? true : false;
+	return screen_ != nullptr ? true : false;
 }
 
 bool ViewStream::CreateVisual(Display* display, Screen* screen) 
@@ -167,7 +167,7 @@ bool ViewStream::CreateVisual(Display* display, Screen* screen)
 		XFree(fbConfig);
 	}
 
-	return visual_ != NULL ? true : false;
+	return visual_ != nullptr ? true : false;
 }
 
 bool ViewStream::Open()
@@ -215,7 +215,7 @@ bool ViewStream::Render( void* image, uint32_t width, uint32_t height )
 GLTexture* ViewStream::AllocTexture( uint32_t width, uint32_t height)
 {
 	if( width == 0 || height == 0 )
-		return NULL;
+		return nullptr;
 
 	if (texture_)
 		return texture_;
