@@ -10,7 +10,7 @@ class VideoDisplay  : public rclcpp::Node {
 	VideoDisplay() : Node("opengl_display") {
         
         subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
-            "raw_image", 10, 
+            "detected_objects", 10, 
             std::bind(&VideoDisplay::subscription_callback, this, _1));
 
         RCLCPP_INFO(this->get_logger(), "opening video output stream: %s");
@@ -57,7 +57,6 @@ class VideoDisplay  : public rclcpp::Node {
     
 };
 
-// node main loop
 int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);

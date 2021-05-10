@@ -5,6 +5,11 @@ build/
 install/
 
 #
+# application data
+#
+data/
+
+#
 # ros2 transient outputs
 #
 log/

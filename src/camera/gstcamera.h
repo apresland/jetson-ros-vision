@@ -55,10 +55,6 @@ class GstCamera {
     }
 
     private:
-    rclcpp::Node *node_;
-    std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::Image>> publisher_;
-
-    private:
 	std::thread consumer_;
 	std::mutex mutex_;
 	std::condition_variable condition_;
@@ -78,6 +74,10 @@ class GstCamera {
     CUDAColorConversionBuffer buffer_rgb_;
 
     imageConverter* image_converter_;
+
+        private:
+    rclcpp::Node *node_;
+    std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::Image>> publisher_;
 };
 
 #endif
