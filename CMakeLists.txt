@@ -38,9 +38,9 @@ ament_target_dependencies(camera rclcpp std_msgs sensor_msgs vision_msgs)
 install(TARGETS camera DESTINATION lib/${PROJECT_NAME})
 
 # object detection
-add_executable(detect src/detect/detectnode.cpp src/detect/detect.cpp)
+add_executable(detect src/detect/detectnode.cpp src/detect/detect.cpp src/detect/network.cpp src/detect/engine.cpp src/detect/logger.cpp src/plugins/FlattenConcat.cpp src/cuda/imageconverter.cpp src/cuda/cudargb.cu src/cuda/tensorconvert.cu)
 target_include_directories(detect PRIVATE src/cuda src/detect)
-target_link_libraries(detect ${catkin_LIBRARIES} ${CUDA_LIBRARIES})
+target_link_libraries(detect nvinfer nvinfer_plugin nvcaffe_parser cublas ${catkin_LIBRARIES} ${CUDA_LIBRARIES})
 ament_target_dependencies(detect rclcpp std_msgs sensor_msgs vision_msgs)
 install(TARGETS detect DESTINATION lib/${PROJECT_NAME})
 

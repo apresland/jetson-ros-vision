@@ -75,7 +75,7 @@ class GstCamera {
 
     imageConverter* image_converter_;
 
-        private:
+    private:
     rclcpp::Node *node_;
     std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::Image>> publisher_;
 };

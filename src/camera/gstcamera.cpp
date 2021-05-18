@@ -33,7 +33,7 @@ bool GstCamera::BuildLaunchStr()
     std::ostringstream ss;
     ss << "nvarguscamerasrc sensor-id=" << 0;
     ss << " ! video/x-raw(memory:NVMM), width=(int)" << 1280 << ", height=(int)" << 720 << ", " 
-        << "framerate=" << (int)60<< "/1, "
+        << "framerate=" << (int)30<< "/1, "
         << "format=(string)NV12";
     ss << " ! nvvidconv flip-method=" << 2;
     ss << " ! video/x-raw";
