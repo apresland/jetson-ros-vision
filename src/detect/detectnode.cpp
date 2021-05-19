@@ -5,11 +5,11 @@ class ObjectDetection  : public rclcpp::Node {
 
     public:
     ObjectDetection() : Node("object_detection") {
-        detect_ = std::make_unique<Detect>((rclcpp::Node*)this);
+        detector_ = std::make_unique<Detect>((rclcpp::Node*)this);
     }
 
     private:
-	std::unique_ptr<Detect> detect_;
+	std::unique_ptr<Detect> detector_;
 };
 
 int main(int argc, char **argv)

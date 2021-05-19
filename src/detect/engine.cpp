@@ -5,9 +5,10 @@
 #include "logger.h"
 #include "engine.h"
 
-nvinfer1::ICudaEngine* InferenceEngine::Create()
-{
-	nvinfer1::ICudaEngine* engine = InferenceEngine::LoadFromCache(cached_model_path);
+nvinfer1::ICudaEngine* InferenceEngine::Create() {
+
+	nvinfer1::ICudaEngine* engine = 
+		InferenceEngine::LoadFromCache(cached_model_path);
 
 	if( nullptr == engine )
 	{
@@ -18,13 +19,12 @@ nvinfer1::ICudaEngine* InferenceEngine::Create()
 	return engine;
 }
 
-nvinfer1::ICudaEngine* InferenceEngine::LoadFromCache(
-	const char* cached_model_path)
-{	
+nvinfer1::ICudaEngine* InferenceEngine::LoadFromCache(const char* cached_model_path) {
+
 	// determine the file size of the engine
 	size_t engine_size = fileSize(cached_model_path);
 
-	if( engine_size == 0 )
+	if( 0 == engine_size )
 	{
 		return nullptr;
 	}
@@ -59,14 +59,14 @@ nvinfer1::ICudaEngine* InferenceEngine::LoadFromCache(
 
 	nvinfer1::IRuntime* infer =  nvinfer1::createInferRuntime(gLogger);
 
-	if( !infer )
+	if( nullptr == infer )
 	{
 		return nullptr;
 	}
 
     nvinfer1::ICudaEngine* engine = infer->deserializeCudaEngine(engine_stream, engine_size, nullptr);
     
-	if( !engine )
+	if( nullptr == engine )
 	{
 		return nullptr;
 	}
@@ -78,21 +78,21 @@ nvinfer1::ICudaEngine* InferenceEngine::LoadFromUFF(const char* file_path)
 {
 	nvinfer1::IBuilder* builder = InferenceEngine::CreateBuilder();
 
-    if( ! builder )
+    if( nullptr == builder )
     {
         return nullptr;
     }
 
 	nvinfer1::INetworkDefinition* network = builder->createNetwork();
 
-    if( ! network )
+    if( nullptr == network )
     {
         return nullptr;
     }
 
     nvuffparser::IUffParser* parser = nvuffparser::createUffParser();
     
-    if ( ! parser )
+    if ( nullptr == parser )
     {
         return nullptr;
     }
@@ -100,12 +100,14 @@ nvinfer1::ICudaEngine* InferenceEngine::LoadFromUFF(const char* file_path)
 	const std::string input = "Input";
 	nvinfer1::Dims3 dimensions = nvinfer1::Dims3(3,300,300);
 
-	if ( !parser->registerInput(input.c_str(), dimensions, nvuffparser::UffInputOrder::kNCHW) )
+	if ( false == parser->registerInput(input.c_str(), dimensions, nvuffparser::UffInputOrder::kNCHW) )
 	{
 		return nullptr;
 	}
 
-    parser->registerOutput("MarkOutput_0");
+    if ( false == parser->registerOutput("MarkOutput_0") ) {
+		return nullptr;
+	}
 
     if ( !parser->parse(file_path, *network, nvinfer1::DataType::kFLOAT) )
     {
@@ -114,21 +116,14 @@ nvinfer1::ICudaEngine* InferenceEngine::LoadFromUFF(const char* file_path)
 
 	nvinfer1::IBuilderConfig* config = builder->createBuilderConfig();
 
-	if (! config )
+	if ( nullptr == config )
 	{
 		return nullptr;
 	}
 
 	config->setMaxWorkspaceSize(MAX_WORKSPACE_SIZE);
 
-
-	nvinfer1::ICudaEngine* engine = builder->buildEngineWithConfig(*network, *config);
-	
-	if ( !engine )
-		return nullptr;
-
-
-    return engine;
+	return builder->buildEngineWithConfig(*network, *config);
 }
 
 nvinfer1::IBuilder* InferenceEngine::CreateBuilder()

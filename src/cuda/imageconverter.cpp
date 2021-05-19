@@ -60,7 +60,7 @@ bool imageConverter::Convert( const sensor_msgs::msg::Image::Ptr& input )
 	const size_t image_format_size = (input->width * input->height * sizeof(uchar3) * 8) / 8;
 
 	// assure memory allocation
-	if( !Resize(input->width, input->height) )
+	if( false == Initialize(input->width, input->height) )
 		return false;
 	
 	// copy input to shared memory
@@ -77,7 +77,7 @@ bool imageConverter::Convert( const sensor_msgs::msg::Image::Ptr& input )
 }
 
 // Convert
-bool imageConverter::Convert( sensor_msgs::msg::Image& msg, uchar3* imageGPU )
+bool imageConverter::ConvertToSensorMessage( sensor_msgs::msg::Image& msg, uchar3* imageGPU )
 {
 	if( !input_cpu_ || !imageGPU || width_ == 0 || height_ == 0 || size_input_ == 0 || size_output_ == 0 )
 		return false;
@@ -109,11 +109,10 @@ bool imageConverter::Convert( sensor_msgs::msg::Image& msg, uchar3* imageGPU )
 	return true;
 }
 
-// Resize
-bool imageConverter::Resize( uint32_t width, uint32_t height)
+bool imageConverter::Initialize( uint32_t width, uint32_t height)
 {
-	const size_t input_size  =(width * height * sizeof(uchar3) * 8) / 8;;
-	const size_t output_size = (width * height * sizeof(uchar3) * 8) / 8;;
+	const size_t input_size  =(width * height * sizeof(uchar3) * 8) / 8;
+	const size_t output_size = (width * height * sizeof(uchar3) * 8) / 8;
 
 	if( input_size != size_input_ || output_size != size_output_ || width_ != width || height_ != height )
 	{

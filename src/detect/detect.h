@@ -4,6 +4,7 @@
 
 #include "network.h"
 #include "imageconverter.h"
+#include "overlay.h"
 
 class Detect {
 
@@ -11,7 +12,13 @@ class Detect {
     Detect(rclcpp::Node *node);
 
     private:
-    void subscription_callback(const sensor_msgs::msg::Image::SharedPtr msg ) const;
+    void subscription_callback(const sensor_msgs::msg::Image::SharedPtr msg );
+
+    private:
+    void Initialize();
+
+    private:
+    void ProcessInput() const;
 
     private:
     rclcpp::Node *node_;
@@ -19,6 +26,15 @@ class Detect {
     std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::Image>> publisher_;
 
     private:
-    imageConverter* image_converter_;
+    imageConverter* input_;
+    imageConverter* output_;
+
+    private:
+    Overlay* overlay_;
+
+    private:
     Network* network_;
+
+    private:
+    bool initialized_;
 };

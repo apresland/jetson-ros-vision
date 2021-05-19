@@ -1,3 +1,5 @@
+#pragma once
+
 #include <memory>
 #include <map>
 #include <NvInfer.h>
@@ -24,26 +26,50 @@ class Network {
         float* CUDA;
     };
 
+    public:
+	struct Detection
+	{
+		float Confidence;
+		float Left;
+		float Right;
+		float Top;
+		float Bottom;
+
+
+		/**< Calculate the width of the object */
+		inline float Width() const { return Right - Left; }
+
+		/**< Calculate the height of the object */
+		inline float Height() const	{ return Bottom - Top; }
+    };
 
     public:
     Network(rclcpp::Node *node);
+    ~Network();
 
     public:
-    static Network* Create(
-        rclcpp::Node *node);
+    void Initialize();
     
     void LoadNetwork();
 
+    public:
     int Detect(
         uchar3* img_data,
         uint32_t img_width,
-        uint32_t img_height );
+        uint32_t img_height,
+        Detection** detections);
 
     LayerBinding RegisterBinding(
         const std::string& input);
 
     void CreateBindings(
         nvinfer1::ICudaEngine* engine);
+
+    bool AllocDetections();
+
+    bool Overlay( 
+        void* input, void* output, uint32_t width, uint32_t height,
+        Detection* detections, uint32_t numDetections);
 
     private:
     rclcpp::Node *node_;
@@ -55,4 +81,11 @@ class Network {
     LayerBinding input_binding_;
     LayerBinding output_binding_;
     LayerBinding output_count_binding_;
+
+    private:
+    Detection* mDetectionSets[2];
+	uint32_t   mDetectionSet;
+	uint32_t   mMaxDetections;
+
+	static const uint32_t mNumDetectionSets = 16;
 };

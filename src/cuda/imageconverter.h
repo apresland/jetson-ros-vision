@@ -34,17 +34,17 @@ public:
 	void Free();
 
 
-	bool Convert( const sensor_msgs::msg::Image::Ptr& input );
+	bool Convert( const sensor_msgs::msg::Image::Ptr& msg_in );
 
 	/**
 	 * Convert to ROS sensor_msgs::Image message
 	 */
-	bool Convert( sensor_msgs::msg::Image& msg_out, uchar3* imageGPU );
+	bool ConvertToSensorMessage( sensor_msgs::msg::Image& msg_out, uchar3* imageGPU );
 
 	/**
-	 * Resize the memory (if necessary)
+	 * Initialize the memory if necessary
 	 */
-	bool Resize( uint32_t width, uint32_t height);
+	bool Initialize( uint32_t width, uint32_t height);
 
 	/**
 	 * Retrieve the converted image width

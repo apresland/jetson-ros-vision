@@ -308,7 +308,7 @@ void GstCamera::Process() {
 		return;
 	}
 
-	if( !image_converter_->Resize(1280, 720) )
+	if( !image_converter_->Initialize(1280, 720) )
 	{
 		RCLCPP_INFO(node_->get_logger(), "failed to resize camera image converter");
 		return;
@@ -319,7 +319,7 @@ void GstCamera::Process() {
 
     auto msg = sensor_msgs::msg::Image();
 
-	if( !image_converter_->Convert(msg, (uchar3*)nextRGB))
+	if( !image_converter_->ConvertToSensorMessage(msg, (uchar3*)nextRGB))
 	{
 		RCLCPP_INFO(node_->get_logger(), "failed to convert video stream frame to sensor_msgs::Image");
 		return;

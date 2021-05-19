@@ -23,51 +23,71 @@ static inline nvinfer1::Dims validateDims( const nvinfer1::Dims& dims )
 	return dims_out;
 }
 
-Network* Network::Create(rclcpp::Node *node)
-{
-	const char* class_labels = "/home/andy/code/jetson-ros-vision/data/networks/SSD-Mobilenet-v2/ssd_coco_labels.txt";
-
-    assert( initLibNvInferPlugins(&gLogger, "") );
-
-    Network* network = new Network(node);
-    network->LoadNetwork();
-
-	return network;
-}  
-
 Network::Network(rclcpp::Node *node)
  : node_(node)
  {
 	this->engine_   = nullptr;
 	this->context_  = nullptr;
 	this->bindings_ = nullptr;
+
+	mDetectionSets[0] = NULL; // cpu ptr
+	mDetectionSets[1] = NULL; // gpu ptr
+	mDetectionSet     = 0;
+	mMaxDetections    = 0;
  }
+
+Network::~Network() {
+
+	if( mDetectionSets != NULL )
+	{
+		cudaFreeHost(mDetectionSets[0]);
+		
+		mDetectionSets[0] = NULL;
+		mDetectionSets[1] = NULL;
+	}
+}
+
+void Network::Initialize() {
+
+    assert( initLibNvInferPlugins(&gLogger, "") );
+    LoadNetwork();
+} 
 
 Network::LayerBinding Network::RegisterBinding( const std::string& name)
 {
-	RCLCPP_INFO(node_->get_logger(), "registering binding for tensor, %s", name.c_str());
+	RCLCPP_INFO(node_->get_logger(),
+		"registering binding for tensor, %s", name.c_str());
 
 	if( nullptr == bindings_ )
 	{
-		RCLCPP_ERROR(node_->get_logger(), "cannot register binding - no memory allocated operation");
+		RCLCPP_ERROR(node_->get_logger(),
+			"cannot register binding - no memory allocated operation");
 	}
 
 	const int index = engine_->getBindingIndex(name.c_str());
 
 	if( index < 0 )
 	{
-		RCLCPP_ERROR(node_->get_logger(), "failed to get tensor binding index from CUDA engine");
+		RCLCPP_ERROR(node_->get_logger(),
+			"failed to get tensor binding index from CUDA engine");
 	}
 
-	nvinfer1::Dims dimensions = validateDims(engine_->getBindingDimensions(index));
-	size_t size = kMaxBatchSize * DIMS_C(dimensions) * DIMS_H(dimensions) * DIMS_W(dimensions) * sizeof(float);
+	nvinfer1::Dims dimensions = 
+		validateDims(engine_->getBindingDimensions(index));
+
+	size_t size = kMaxBatchSize 
+		* DIMS_C(dimensions)
+		* DIMS_H(dimensions)
+		* DIMS_W(dimensions)
+		* sizeof(float);
 
 	void* CPU  = nullptr;
 	void* CUDA = nullptr;
 
 	if( !cudaAllocMapped((void**)&CPU, (void**)&CUDA, size) )
 	{
-		RCLCPP_ERROR(node_->get_logger(), "failed to alloc CUDA mapped memory for tensor input, %zu bytes", size);
+		RCLCPP_ERROR(node_->get_logger(),
+			"failed to alloc CUDA mapped memory for tensor input, %zu bytes", size);
 	}
 
 	LayerBinding binding;
@@ -95,9 +115,9 @@ void Network::CreateBindings(nvinfer1::ICudaEngine* engine)
 	bindings_ = (void**)malloc(bytes);
 	memset(bindings_, 0, bytes);
 
-	this->input_binding_ 		= RegisterBinding("Input");
-	this->output_binding_ 		= RegisterBinding("NMS");
-	this->output_count_binding_ = RegisterBinding("NMS_1");
+	input_binding_ 			= RegisterBinding("Input");
+	output_binding_ 		= RegisterBinding("NMS");
+	output_count_binding_ 	= RegisterBinding("NMS_1");
 }
 
 void Network::LoadNetwork()
@@ -106,23 +126,41 @@ void Network::LoadNetwork()
 	 * setup TensorRT engine
 	 */
 	engine_ = InferenceEngine::Create();
-    RCLCPP_INFO(node_->get_logger(), "finished creating engine");
+    RCLCPP_INFO(node_->get_logger(),
+		"finished creating engine");
 
 	/*
 	 * setup TensorRT execution context
 	 */
 	context_ = engine_->createExecutionContext();
-	RCLCPP_INFO(node_->get_logger(), "created execution context");
+	RCLCPP_INFO(node_->get_logger(),
+		"created execution context");
 
 	/*
 	 * setup tensor bindings
 	 */
 	this->CreateBindings(engine_);
+    RCLCPP_INFO(node_->get_logger(),
+		"finished defining bindings");
 
-    RCLCPP_INFO(node_->get_logger(), "finished defining bindings");
+	this->AllocDetections();
 }
 
-int Network::Detect( uchar3* img_data, uint32_t img_width, uint32_t img_height) {
+bool Network::AllocDetections() {
+
+	mMaxDetections = DIMS_H(output_binding_.dims) * DIMS_C(output_binding_.dims);
+
+	// allocate array to store detection results
+	const size_t det_size = sizeof(Detection) * mNumDetectionSets * mMaxDetections;
+	
+	if( !cudaAllocMapped((void**)&mDetectionSets[0], (void**)&mDetectionSets[1], det_size) )
+		return false;
+	
+	memset(mDetectionSets[0], 0, det_size);
+	return true;	
+}
+
+int Network::Detect( uchar3* img_data, uint32_t img_width, uint32_t img_height, Detection** detections) {
 
 	if( cudaSuccess != cudaTensorNormBGR(
 		img_data, img_width, img_height, 
@@ -139,6 +177,20 @@ int Network::Detect( uchar3* img_data, uint32_t img_width, uint32_t img_height) 
 		return -1;
 	}
 
+
+
+	Detection* detection = mDetectionSets[0] + mDetectionSet * mMaxDetections;
+
+	if( detections != NULL )
+		*detections = detection;
+
+	mDetectionSet++;
+
+	if( mDetectionSet >= mNumDetectionSets )
+		mDetectionSet = 0;
+
+
+	int numDetections = 0;
 	const int rawDetections = *(int*)output_count_binding_.CPU;
 	const int rawParameters = DIMS_W(output_binding_.dims);
 
@@ -146,11 +198,20 @@ int Network::Detect( uchar3* img_data, uint32_t img_width, uint32_t img_height) 
 	{
 		float* object_data = output_binding_.CPU + n * rawParameters;
 
-		if( object_data[2] < 0.5 /** coverage threshold */)
-			continue;
+		if( (uint32_t)object_data[1] != 1 )
+			continue;	
 
-		RCLCPP_INFO(node_->get_logger(), "Detection --- class: %i confidence %f:", (uint32_t)object_data[1], object_data[2]);
+		if( object_data[2] < 0.5 /** detection threshold */)
+			continue;	
+
+		detection[numDetections].Confidence = object_data[2];
+		detection[numDetections].Left       = object_data[3] * img_width;
+		detection[numDetections].Top        = object_data[4] * img_height;
+		detection[numDetections].Right      = object_data[5] * img_width;
+		detection[numDetections].Bottom	 	= object_data[6] * img_height;
+
+		++numDetections;
 	}
 
-	return 0;
+	return numDetections;
 }
