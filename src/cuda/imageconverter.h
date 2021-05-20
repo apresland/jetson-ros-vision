@@ -34,7 +34,7 @@ public:
 	void Free();
 
 
-	bool Convert( const sensor_msgs::msg::Image::Ptr& msg_in );
+	bool Convert( const sensor_msgs::msg::Image::UniquePtr& msg_in );
 
 	/**
 	 * Convert to ROS sensor_msgs::Image message

@@ -17,7 +17,8 @@ GstCamera::GstCamera(rclcpp::Node *node) {
     is_streaming_ = false;
     stop_signal_ = false;
     image_converter_ = new imageConverter(node);
-    publisher_ = node_->create_publisher<sensor_msgs::msg::Image>("raw_image", 2);
+    publisher_ = node_->create_publisher<sensor_msgs::msg::Image>("raw_image", 5);
+    captured_publisher_ = publisher_;
     buffer_rgb_.threaded_ = false;
     Restart(); 
 }
@@ -33,7 +34,7 @@ bool GstCamera::BuildLaunchStr()
     std::ostringstream ss;
     ss << "nvarguscamerasrc sensor-id=" << 0;
     ss << " ! video/x-raw(memory:NVMM), width=(int)" << 1280 << ", height=(int)" << 720 << ", " 
-        << "framerate=" << (int)30<< "/1, "
+        << "framerate=" << (int)120<< "/1, "
         << "format=(string)NV12";
     ss << " ! nvvidconv flip-method=" << 2;
     ss << " ! video/x-raw";
@@ -317,18 +318,19 @@ void GstCamera::Process() {
 
     RCLCPP_DEBUG(node_->get_logger(), "publishing raw image data frame");
 
-    auto msg = sensor_msgs::msg::Image();
+    auto msg = sensor_msgs::msg::Image::UniquePtr(new sensor_msgs::msg::Image());
 
-	if( !image_converter_->ConvertToSensorMessage(msg, (uchar3*)nextRGB))
+	if( !image_converter_->ConvertToSensorMessage(*(msg.get()), (uchar3*)nextRGB))
 	{
 		RCLCPP_INFO(node_->get_logger(), "failed to convert video stream frame to sensor_msgs::Image");
 		return;
 	}
 
 	// populate timestamp in header field
-	msg.header.stamp = node_->now();
+	msg->header.stamp = node_->now();
 
-    publisher_->publish(msg);	
+    auto pub_ptr = captured_publisher_.lock();
+    pub_ptr->publish(std::move(msg));
     lock.unlock();
 
     return;

@@ -9,7 +9,9 @@ Detect::Detect(rclcpp::Node *node) : node_(node) {
         std::bind(&Detect::subscription_callback, this, _1));
 
     publisher_ = node_->create_publisher<sensor_msgs::msg::Image>(
-        "detected_objects", 2);
+        "detected_objects", 10);
+
+    captured_publisher_ = publisher_;
 
     input_ = new imageConverter(node_);
     output_ = new imageConverter(node_);
@@ -29,7 +31,7 @@ void Detect::Initialize() {
     initialized_ = true;
 }
 
-void Detect::subscription_callback(const sensor_msgs::msg::Image::SharedPtr input_msg ) {
+void Detect::subscription_callback(const sensor_msgs::msg::Image::UniquePtr input_msg ) {
 
     if ( false == initialized_) {
         Initialize();
@@ -45,8 +47,8 @@ void Detect::subscription_callback(const sensor_msgs::msg::Image::SharedPtr inpu
 
     ProcessInput();
 
-    auto output_msg = sensor_msgs::msg::Image();
-	if ( false == output_->ConvertToSensorMessage(output_msg, output_->ImageGPU())) {
+    auto output_msg = sensor_msgs::msg::Image::UniquePtr(new sensor_msgs::msg::Image());
+	if ( false == output_->ConvertToSensorMessage(*(output_msg.get()), output_->ImageGPU())) {
         RCLCPP_ERROR(node_->get_logger(),"failed to convert %ux%u %s image to output message", 
             input_msg->width,
             input_msg->height,
@@ -54,7 +56,8 @@ void Detect::subscription_callback(const sensor_msgs::msg::Image::SharedPtr inpu
         return;
     }
 
-    publisher_->publish(output_msg);
+    auto pub_ptr = captured_publisher_.lock();
+    pub_ptr->publish(std::move(output_msg));
 }
 
  void Detect::ProcessInput() const {

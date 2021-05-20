@@ -78,6 +78,7 @@ class GstCamera {
     private:
     rclcpp::Node *node_;
     std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::Image>> publisher_;
+    std::weak_ptr<rclcpp::Publisher<sensor_msgs::msg::Image>> captured_publisher_;
 };
 
 #endif

@@ -30,26 +30,27 @@ else()
     message(FATAL_ERROR "could not find ROS2 package")
 endif()
 
-# video input
-add_executable(camera src/camera/cameranode.cpp src/camera/gstcamera.cpp src/cuda/imageconverter.cpp src/cuda/cudayuv.cu src/cuda/cudargb.cu)
-target_include_directories(camera PRIVATE src/cuda src/camera)
-target_link_libraries(camera GL GLU GLEW gstreamer-1.0 gstapp-1.0 gstpbutils-1.0 gobject-2.0 ${catkin_LIBRARIES} ${CUDA_LIBRARIES})
-ament_target_dependencies(camera rclcpp std_msgs sensor_msgs vision_msgs)
-install(TARGETS camera DESTINATION lib/${PROJECT_NAME})
+add_executable( detect
+    src/main.cpp
+    src/camera/gstcamera.cpp src/cuda/imageconverter.cpp src/cuda/cudayuv.cu src/cuda/cudargb.cu
+    src/detect/detect.cpp src/detect/network.cpp src/detect/engine.cpp src/detect/overlay.cpp src/detect/overlay.cu src/detect/logger.cpp src/plugins/FlattenConcat.cpp src/cuda/imageconverter.cpp src/cuda/cudargb.cu src/cuda/tensorconvert.cu
+    src/display/display.cpp src/display/viewstream.cpp src/cuda/imageconverter.cpp src/cuda/cudargb.cu src/cuda/cudapixelbufferinterop.cpp src/gl/gltexture.cpp src/gl/glpixelbuffer.cpp
+    )
 
-# object detection
-add_executable(detect src/detect/detectnode.cpp src/detect/detect.cpp src/detect/network.cpp src/detect/engine.cpp src/detect/overlay.cpp src/detect/overlay.cu src/detect/logger.cpp src/plugins/FlattenConcat.cpp src/cuda/imageconverter.cpp src/cuda/cudargb.cu src/cuda/tensorconvert.cu)
-target_include_directories(detect PRIVATE src/cuda src/detect)
-target_link_libraries(detect nvinfer nvinfer_plugin nvcaffe_parser cublas ${catkin_LIBRARIES} ${CUDA_LIBRARIES})
-ament_target_dependencies(detect rclcpp std_msgs sensor_msgs vision_msgs)
+target_include_directories(detect 
+    PRIVATE src/cuda src/detect src/camera src/display src/gl
+    )
+
+target_link_libraries(detect 
+    GL GLU GLEW X11 gstreamer-1.0 gstapp-1.0 gstpbutils-1.0 gobject-2.0 nvinfer nvinfer_plugin nvcaffe_parser cublas ${catkin_LIBRARIES} ${CUDA_LIBRARIES}
+    )
+
+ament_target_dependencies(detect 
+    rclcpp std_msgs sensor_msgs vision_msgs
+    )
+
 install(TARGETS detect DESTINATION lib/${PROJECT_NAME})
 
-# video display
-add_executable(display src/display/displaynode.cpp src/display/viewstream.cpp src/cuda/imageconverter.cpp src/cuda/cudargb.cu src/cuda/cudapixelbufferinterop.cpp src/gl/gltexture.cpp src/gl/glpixelbuffer.cpp)
-target_include_directories(display PRIVATE src/cuda src/gl)
-target_link_libraries(display GL GLU GLEW X11 ${catkin_LIBRARIES} ${CUDA_LIBRARIES})
-ament_target_dependencies(display rclcpp std_msgs sensor_msgs vision_msgs)
-install(TARGETS display DESTINATION lib/${PROJECT_NAME})
 
 # ros launchers
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)

@@ -4,18 +4,10 @@
 class ObjectDetection  : public rclcpp::Node {
 
     public:
-    ObjectDetection() : Node("object_detection") {
+    ObjectDetection() : Node("object_detection", rclcpp::NodeOptions().use_intra_process_comms(true)) {
         detector_ = std::make_unique<Detect>((rclcpp::Node*)this);
     }
 
     private:
 	std::unique_ptr<Detect> detector_;
 };
-
-int main(int argc, char **argv)
-{
-    rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<ObjectDetection>());
-	rclcpp::shutdown();
-	return 0;
-}

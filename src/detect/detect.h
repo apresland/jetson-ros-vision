@@ -12,7 +12,7 @@ class Detect {
     Detect(rclcpp::Node *node);
 
     private:
-    void subscription_callback(const sensor_msgs::msg::Image::SharedPtr msg );
+    void subscription_callback(const sensor_msgs::msg::Image::UniquePtr msg );
 
     private:
     void Initialize();
@@ -24,6 +24,7 @@ class Detect {
     rclcpp::Node *node_;
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subscription_;
     std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::Image>> publisher_;
+    std::weak_ptr<rclcpp::Publisher<sensor_msgs::msg::Image>> captured_publisher_;
 
     private:
     imageConverter* input_;
@@ -31,8 +32,6 @@ class Detect {
 
     private:
     Overlay* overlay_;
-
-    private:
     Network* network_;
 
     private:

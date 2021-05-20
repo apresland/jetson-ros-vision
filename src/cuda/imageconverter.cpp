@@ -55,7 +55,7 @@ void imageConverter::Free()
 }
 
 
-bool imageConverter::Convert( const sensor_msgs::msg::Image::Ptr& input )
+bool imageConverter::Convert( const sensor_msgs::msg::Image::UniquePtr& input )
 {
 	const size_t image_format_size = (input->width * input->height * sizeof(uchar3) * 8) / 8;
 
