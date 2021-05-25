@@ -2,11 +2,9 @@
 #define __GSTREAMER_CAMERA_H__
 
 #include <chrono>
-#include <thread>
 #include <mutex>
 #include <condition_variable>
 #include <queue>
-#include <atomic>
 
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/image_encodings.hpp>
@@ -19,7 +17,6 @@
 #include <gst/app/gstappsink.h>
 
 #include "cudaconversionbuffer.h"
-#include "imageconverter.h"
 
 class GstCamera {
 
@@ -38,8 +35,10 @@ class GstCamera {
     bool Open();
     void Restart();
     void Acquire();
-    void Process();
+    bool Process(void** output);
 
+    public:
+    void SetPublish(bool publish) {publish_ = publish;};
 
     typedef uchar3 PixelType; // IMAGE_RGB8
 
@@ -55,10 +54,8 @@ class GstCamera {
     }
 
     private:
-	std::thread consumer_;
 	std::mutex mutex_;
 	std::condition_variable condition_;
-    std::atomic<bool> stop_signal_;
 	std::queue<int> frame_buffer;
 
     private:
@@ -69,16 +66,13 @@ class GstCamera {
     private:
 	std::string  launchstr_;
     bool is_streaming_;
+    bool publish_ {true};
 
     CUDAColorConversionBuffer buffer_yuv_;
     CUDAColorConversionBuffer buffer_rgb_;
 
-    imageConverter* image_converter_;
-
     private:
     rclcpp::Node *node_;
-    std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::Image>> publisher_;
-    std::weak_ptr<rclcpp::Publisher<sensor_msgs::msg::Image>> captured_publisher_;
 };
 
 #endif

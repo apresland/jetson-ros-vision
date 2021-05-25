@@ -15,18 +15,11 @@ GstCamera::GstCamera(rclcpp::Node *node) {
     sink_ = nullptr;
     pipeline_ = nullptr;
     is_streaming_ = false;
-    stop_signal_ = false;
-    image_converter_ = new imageConverter(node);
-    publisher_ = node_->create_publisher<sensor_msgs::msg::Image>("raw_image", 5);
-    captured_publisher_ = publisher_;
     buffer_rgb_.threaded_ = false;
-    Restart(); 
 }
 
 GstCamera::~GstCamera() {
-    stop_signal_ = true;
-    consumer_.join();
-    delete(image_converter_);
+
 }
 
 bool GstCamera::BuildLaunchStr()
@@ -145,20 +138,7 @@ bool GstCamera::Open()
     return true;
 }
 
-void GstCamera::Restart() {
-
-    Create();
-
-    consumer_ = std::thread([this]() {
-            RCLCPP_INFO(node_->get_logger(), "video processing thread running");
-            while ( !stop_signal_ && rclcpp::ok()) {
-                Process();
-            }
-            stop_signal_ = false;
-            RCLCPP_INFO(node_->get_logger(), "video processing thread stopped");
-        }
-    );
-}
+void GstCamera::Restart() { Create(); }
 
 #define release_return { gst_sample_unref(gstSample); return; }
 
@@ -275,7 +255,7 @@ void GstCamera::Acquire() {
     return;
 }
 
-void GstCamera::Process() {
+bool GstCamera::Process(void** output) {
 
     if (!Open())
         RCLCPP_INFO(node_->get_logger(), "Failed to open video stream");
@@ -288,7 +268,7 @@ void GstCamera::Process() {
 
 	if( !latestYUV ) {
         RCLCPP_INFO(node_->get_logger(), "Failed to get latest YUV frame");
-		return;
+		return false;
     }
 
 	// allocate ringbuffer for colorspace conversion
@@ -297,41 +277,20 @@ void GstCamera::Process() {
 	if( !buffer_rgb_.Allocate(rgbBufferSize))
 	{
 		RCLCPP_INFO(node_->get_logger(), "gstCamera -- failed to allocate buffer (%zu bytes)\n", rgbBufferSize);
-		return;
+		return false;
 	}
 
 	// perform colorspace conversion
 	void* nextRGB = buffer_rgb_.Write();
 
-	if( cudaSuccess !=cudaNV12ToRGB(latestYUV, (uchar3*)nextRGB, 1280, 720))
+	if( cudaSuccess != cudaNV12ToRGB(latestYUV, (uchar3*)nextRGB, 1280, 720))
 	{
 		RCLCPP_INFO(node_->get_logger(), "failed to convert NV12 -> RGB");
-		return;
+		return false;
 	}
 
-	if( !image_converter_->Initialize(1280, 720) )
-	{
-		RCLCPP_INFO(node_->get_logger(), "failed to resize camera image converter");
-		return;
-	}
-
-
-    RCLCPP_DEBUG(node_->get_logger(), "publishing raw image data frame");
-
-    auto msg = sensor_msgs::msg::Image::UniquePtr(new sensor_msgs::msg::Image());
-
-	if( !image_converter_->ConvertToSensorMessage(*(msg.get()), (uchar3*)nextRGB))
-	{
-		RCLCPP_INFO(node_->get_logger(), "failed to convert video stream frame to sensor_msgs::Image");
-		return;
-	}
-
-	// populate timestamp in header field
-	msg->header.stamp = node_->now();
-
-    auto pub_ptr = captured_publisher_.lock();
-    pub_ptr->publish(std::move(msg));
     lock.unlock();
 
-    return;
+    *output = nextRGB;
+    return true;
 }
