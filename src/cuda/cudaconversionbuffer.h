@@ -5,7 +5,7 @@
 
 class CUDAColorConversionBuffer {
 
-void** buffers_;
+uchar3** buffers_;
 static const uint32_t number_of_buffers = 4;
 size_t size_;
 
@@ -23,9 +23,9 @@ inline CUDAColorConversionBuffer();
 inline ~CUDAColorConversionBuffer();
 
 public:
-inline void* Peek();
-inline void* Read();
-inline void* Write();
+inline uchar3* Peek();
+inline uchar3* Read();
+inline uchar3* Write();
 
 public:
 inline bool Allocate( size_t size);

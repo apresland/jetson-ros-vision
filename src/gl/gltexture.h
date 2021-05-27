@@ -32,7 +32,7 @@ public:
 	/**
 	 * Render the texture at the specified window coordinates.
 	 */
-	void Render( void* image);
+	void Render( uchar3* image);
 	
 private:
 

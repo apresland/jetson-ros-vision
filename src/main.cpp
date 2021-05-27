@@ -30,9 +30,9 @@ class MainNode : public rclcpp::Node
 
 		consumer_ = std::thread([this]() {
 
-			void* image = nullptr;
+			uchar3* image = nullptr;
 			uint32_t numDetections = 0;
-			Network::Detection* detections = NULL;
+			Network::Detection* detections = nullptr;
 
 			rclcpp::Parameter image_width = this->get_parameter("image_width");
 			rclcpp::Parameter image_height = this->get_parameter("image_height");

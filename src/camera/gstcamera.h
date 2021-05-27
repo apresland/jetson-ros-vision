@@ -34,7 +34,7 @@ class GstCamera {
     bool Initialize();
     bool Open();
     void Acquire();
-    bool Process(void** output);
+    bool Process(uchar3** output);
 
     public:
     void SetPublish(bool publish) {
@@ -75,8 +75,6 @@ class GstCamera {
             = node_->get_parameter("flip_method");
         return camera_flip_method.as_int();
     }; 
-
-    typedef uchar3 PixelType; // IMAGE_RGB8
 
     inline size_t ImageFormatSize( size_t width, size_t height )
     {

@@ -37,7 +37,7 @@ bool Overlay::Initialize() {
 	return true;
 }
 
-bool Overlay::Render( void* input, void* output, uint32_t width, uint32_t height, Network::Detection* detections, uint32_t numDetections) {
+bool Overlay::Render( uchar3* input, uchar3* output, uint32_t width, uint32_t height, Network::Detection* detections, uint32_t numDetections) {
 
 	const size_t size  =(width * height * sizeof(uchar3) * 8) / 8;
 

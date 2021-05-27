@@ -150,7 +150,7 @@ bool ViewStream::Open()
 	return true;
 }
 
-bool ViewStream::Render( void* image, uint32_t width, uint32_t height )
+bool ViewStream::Render( uchar3* image, uint32_t width, uint32_t height )
 {
 	if( !image || width == 0 || height == 0 )
 		return false;

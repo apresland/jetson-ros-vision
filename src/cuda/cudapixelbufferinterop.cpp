@@ -27,7 +27,7 @@ CUDAPixelBufferInterop::~CUDAPixelBufferInterop()
 	}    
 }
 
-void CUDAPixelBufferInterop::Render(void* image, uint32_t size)
+void CUDAPixelBufferInterop::Render(uchar3* image, uint32_t size)
 {
 	// map from CUDA to openGL using GL interop
 	void* cudaInteropBuffer = this->Map();

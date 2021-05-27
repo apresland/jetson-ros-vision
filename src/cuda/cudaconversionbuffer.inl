@@ -38,14 +38,14 @@ inline bool CUDAColorConversionBuffer::Allocate(size_t size)
 
 	if( buffers_ == nullptr )
 	{
-		const size_t bufferListSize = number_of_buffers * sizeof(void*);
-		buffers_ = (void**)malloc(bufferListSize);
+		const size_t bufferListSize = number_of_buffers * sizeof(uchar3*);
+		buffers_ = (uchar3**)malloc(bufferListSize);
 		memset(buffers_, 0, bufferListSize);
 	}
 
 	for( uint32_t n=0; n < number_of_buffers; n++ )
 	{
-        if( ! cudaAllocMapped(&buffers_[n], size) )
+        if( ! cudaAllocMapped((void**)&buffers_[n], size) )
         {
 
             return false;
@@ -73,7 +73,7 @@ inline void CUDAColorConversionBuffer::MFree()
 	}
 }
 
-inline void* CUDAColorConversionBuffer::Peek()
+inline uchar3* CUDAColorConversionBuffer::Peek()
 {
 	if( !buffers_ )
 	{
@@ -96,7 +96,7 @@ inline void* CUDAColorConversionBuffer::Peek()
 	return buffers_[bufferIndex];
 }
 
-inline void* CUDAColorConversionBuffer::Read()
+inline uchar3* CUDAColorConversionBuffer::Read()
 {
 	if( !buffers_ )
 	{
@@ -128,7 +128,7 @@ inline void* CUDAColorConversionBuffer::Read()
 	return buffers_[index];
 }
 
-inline void* CUDAColorConversionBuffer::Write()
+inline uchar3* CUDAColorConversionBuffer::Write()
 {
 	if( !buffers_ )
 	{

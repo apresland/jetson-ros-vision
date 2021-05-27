@@ -22,7 +22,7 @@ public:
 
 	bool Initialize();
 	virtual bool Open();
-	virtual bool Render( void* image, uint32_t width, uint32_t height);
+	virtual bool Render( uchar3* image, uint32_t width, uint32_t height);
 
 private:
 

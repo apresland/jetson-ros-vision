@@ -38,6 +38,6 @@
  * Convert an NV12 texture (semi-planar 4:2:0) to RGB uchar3 format.
  * NV12 = 8-bit Y plane followed by an interleaved U/V plane with 2x2 subsampling.
  */
-cudaError_t cudaNV12ToRGB( void* input, uchar3* output, size_t width, size_t height );
+cudaError_t cudaNV12ToRGB( uchar3* input, uchar3* output, size_t width, size_t height );
 
 #endif

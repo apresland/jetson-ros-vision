@@ -24,7 +24,7 @@ class CUDAPixelBufferInterop {
     GLPixelBuffer& GLBuffer() {gl_pixel_buffer_.get();}
 
     public:
-    void Render(void* image, uint32_t size);
+    void Render(uchar3* image, uint32_t size);
     void* Map();
     void Unmap();
 

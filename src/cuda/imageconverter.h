@@ -13,10 +13,6 @@
 class imageConverter
 {
 public:
-	/**
-	 * Output image pixel type
-	 */
-	typedef uchar3 PixelType;
 
 	/**
 	 * Constructor
@@ -59,7 +55,7 @@ public:
 	/**
 	 * Retrieve the GPU pointer of the converted image
 	 */
-	inline PixelType* ImageGPU() const		{ return output_gpu_; }
+	inline uchar3* ImageGPU() const		{ return output_gpu_; }
 
 private:
 
@@ -73,8 +69,8 @@ private:
 	void* input_cpu_;
 	void* input_gpu_;
 
-	PixelType* output_cpu_;
-	PixelType* output_gpu_;
+	uchar3* output_cpu_;
+	uchar3* output_gpu_;
 };
 
 #endif

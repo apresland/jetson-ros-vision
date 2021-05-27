@@ -69,7 +69,7 @@ class Network {
     bool AllocDetections();
 
     bool Overlay( 
-        void* input, void* output, uint32_t width, uint32_t height,
+        uchar3* input, uchar3* output, uint32_t width, uint32_t height,
         Detection* detections, uint32_t numDetections);
 
     private:

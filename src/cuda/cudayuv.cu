@@ -155,8 +155,8 @@
      return cudaGetLastError();
  }
  
- // cudaNV12ToRGB (uchar3)
- cudaError_t cudaNV12ToRGB( void* srcDev, uchar3* destDev, size_t width, size_t height )
+ // cudaNV12ToRGB
+ cudaError_t cudaNV12ToRGB( uchar3* srcDev, uchar3* destDev, size_t width, size_t height )
  {
      return launchNV12ToRGB<uchar3>(srcDev, destDev, width, height);
  }

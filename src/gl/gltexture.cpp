@@ -58,7 +58,7 @@ bool GLTexture::Init( uint32_t width, uint32_t height)
 	return true;
 }
 
-void GLTexture::Render(void* image)
+void GLTexture::Render(uchar3* image)
 {
 	cuda_buffer_.get()->Render(image, size_);
 }

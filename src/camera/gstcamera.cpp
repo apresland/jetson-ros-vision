@@ -253,7 +253,7 @@ void GstCamera::Acquire() {
     return;
 }
 
-bool GstCamera::Process(void** output) {
+bool GstCamera::Process(uchar3** output) {
 
     if (!Open())
         RCLCPP_INFO(node_->get_logger(), "Failed to open video stream");
@@ -264,9 +264,9 @@ bool GstCamera::Process(void** output) {
     condition_.wait(lock);
 
 	// get the latest ringbuffer
-	void* latestYUV = buffer_yuv_.Read();
+	uchar3* latestYUV = (uchar3*)buffer_yuv_.Read();
 
-	if( !latestYUV ) {
+	if( ! latestYUV ) {
         RCLCPP_INFO(node_->get_logger(), "Failed to get latest YUV frame");
 		return false;
     }
@@ -281,9 +281,9 @@ bool GstCamera::Process(void** output) {
 	}
 
 	// perform colorspace conversion
-	void* nextRGB = buffer_rgb_.Write();
+	uchar3* nextRGB = buffer_rgb_.Write();
 
-	if( cudaSuccess != cudaNV12ToRGB(latestYUV, (uchar3*)nextRGB, GetImageWidth(), GetImageHeight()))
+	if( cudaSuccess != cudaNV12ToRGB(latestYUV, nextRGB, GetImageWidth(), GetImageHeight()))
 	{
 		RCLCPP_INFO(node_->get_logger(), "failed to convert NV12 -> RGB");
 		return false;

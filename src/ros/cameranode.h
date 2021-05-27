@@ -45,7 +45,7 @@ class VideoPublisher : public rclcpp::Node
 
 			while ( false == stop_signal_ && rclcpp::ok()) {
 
-				void* img = nullptr;
+				uchar3* img = nullptr;
 				camera_->Process(&img);
 				auto msg = sensor_msgs::msg::Image::UniquePtr(new sensor_msgs::msg::Image());
 
