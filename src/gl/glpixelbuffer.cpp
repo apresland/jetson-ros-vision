@@ -4,6 +4,8 @@
 #include "glpixelbuffer.h"
 #include "cudamath.h"
 
+#include <iostream>
+
 std::unique_ptr<GLPixelBuffer> GLPixelBuffer::Create(uint32_t const size, uint32_t const width, uint32_t const height) 
 {
 	// allocate PBO
@@ -11,28 +13,33 @@ std::unique_ptr<GLPixelBuffer> GLPixelBuffer::Create(uint32_t const size, uint32
 	
 	// genearate buffer object
 	glGenBuffers(1, &iD);
-	if( glGetError() != GL_NO_ERROR) 
+	if( glGetError() != GL_NO_ERROR) {
 		return nullptr;
+		}
 
 	// bind buffer object as texture data source
 	glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, iD);
-	if( glGetError() != GL_NO_ERROR) 
+	if( glGetError() != GL_NO_ERROR) {
 		return nullptr;
+		}
 
 	// initialize buffer object data store
 	glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, size, NULL, GL_DYNAMIC_DRAW_ARB);
-	if( glGetError() != GL_NO_ERROR) 
+	if( glGetError() != GL_NO_ERROR) {
 		return nullptr;
+		}
 
 	// unbind buffer object as texture data source
 	glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
-	if( glGetError() != GL_NO_ERROR) 
+	if( glGetError() != GL_NO_ERROR) {
 		return nullptr;
+		}
 
 	// set pixel alignment flags
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	if( glGetError() != GL_NO_ERROR) 
+	if( glGetError() != GL_NO_ERROR) {
 		return nullptr;
+		}
 
     return std::make_unique<GLPixelBuffer>(iD, width, height);
 }

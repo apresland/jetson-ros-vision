@@ -48,21 +48,22 @@ class Network {
     ~Network();
 
     public:
-    void Initialize();
-    
-    void LoadNetwork();
+    bool Initialize();
+    bool LoadNetwork();
 
     public:
-    int Detect(
+    bool Detect(
         uchar3* img_data,
         uint32_t img_width,
         uint32_t img_height,
-        Detection** detections);
+        Detection** detections,
+        uint32_t& numDetections);
 
-    LayerBinding RegisterBinding(
-        const std::string& input);
+    bool RegisterBinding(
+        LayerBinding& binding,
+        const std::string& name);
 
-    void CreateBindings(
+    bool CreateBindings(
         nvinfer1::ICudaEngine* engine);
 
     bool AllocDetections();

@@ -7,95 +7,101 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "gstcamera.h"
-#include "detect.h"
+#include "network.h"
+#include "overlay.h"
 #include "viewstream.h"
 
 bool signal_recieved = false;
-void sig_handler(int signo)
-{
-	if( signo == SIGINT )
-	{
-		signal_recieved = true;
-	}
+
+void sig_handler(int signo) {
+	if( signo == SIGINT ) signal_recieved = true;
 }
 
 class MainNode : public rclcpp::Node 
 {
 	public:
-	MainNode() : Node("main", rclcpp::NodeOptions().use_intra_process_comms(true)) {
-		camera_ = std::make_unique<GstCamera>((rclcpp::Node*)this);
-        display_ = std::make_unique<ViewStream>((rclcpp::Node*)this);
-		image_converter_ = new imageConverter(this);
-		image_converter_2_ = new imageConverter(this);
-		stop_signal_ = false;
-
-		RCLCPP_INFO(this->get_logger(), "MainNode -- starting video input stream");
-		camera_->Restart();
-
-		RCLCPP_INFO(this->get_logger(), "MainNode -- starting video output stream");
-		if( ! display_->Init() )
-		{
-			RCLCPP_ERROR(this->get_logger(), "MainNode -- failed to initialize video output stream");
-		}  
-
-		if( ! display_->Open() )
-		{
-			RCLCPP_ERROR(this->get_logger(), "MainNode -- failed to open video output stream");
-		} 
+	MainNode() : Node("composit", rclcpp::NodeOptions().use_intra_process_comms(true)) 
+	{
+		this->declare_parameter("csi_port");
+		this->declare_parameter("image_width");
+		this->declare_parameter("image_height");
+		this->declare_parameter("frame_rate");
+		this->declare_parameter("flip_method");
 
 		consumer_ = std::thread([this]() {
 
-			while ( /*false == stop_signal_ && */ rclcpp::ok()) {
+			void* image = nullptr;
+			uint32_t numDetections = 0;
+			Network::Detection* detections = NULL;
 
+			rclcpp::Parameter image_width = this->get_parameter("image_width");
+			rclcpp::Parameter image_height = this->get_parameter("image_height");
 
+    		std::unique_ptr<ViewStream> display_ = std::make_unique<ViewStream>((rclcpp::Node*)this);
+			std::unique_ptr<Network> network_  = std::make_unique<Network>((rclcpp::Node*)this);
+			std::unique_ptr<Overlay> overlay_ = std::make_unique<Overlay>((rclcpp::Node*)this);
+			std::unique_ptr<GstCamera> camera_ = std::make_unique<GstCamera>((rclcpp::Node*)this);
 
-				if( !image_converter_->Initialize(1280, 720) )
-				{
-					RCLCPP_INFO(this->get_logger(), "failed to resize camera image converter");
-				}
+			if( ! display_->Initialize() ) {
+				RCLCPP_ERROR(this->get_logger(),
+					"MainNode -- failed to initialize video output");
+				std::terminate();
+					} 
 
+    		if ( ! network_->Initialize() ) {
+				RCLCPP_ERROR(this->get_logger(),
+					"MainNode -- failed to initialize neural network");
+				std::terminate();
+					}
+			
+			if ( ! overlay_->Initialize() ) {
+				RCLCPP_ERROR(this->get_logger(),
+					"MainNode -- failed to initialize detection overlay");
+				std::terminate();				
+					}
 
-				void* image = nullptr;
-				camera_->Process(&image);
-                RCLCPP_INFO(this->get_logger(), "got an image %p", image);
+			if ( ! camera_->Initialize() ) {
+				RCLCPP_ERROR(this->get_logger(),
+					"MainNode -- failed to initialize video input");
+				std::terminate();				
+					}
 
-				auto msg = sensor_msgs::msg::Image::UniquePtr(new sensor_msgs::msg::Image());
-				if( !image_converter_->ConvertToSensorMessage(*(msg.get()), (uchar3*)image))
-				{
-					RCLCPP_INFO(this->get_logger(), "failed to convert video stream frame to sensor_msgs::Image");
-				}
+			while ( rclcpp::ok() && true == stop_signal_ ) {
 
-				image_converter_2_->Convert(msg);
-				display_->Render(image_converter_2_->ImageGPU(), image_converter_2_->GetWidth(), image_converter_2_->GetHeight());
+				if ( ! camera_->Process(&image) ) {
+					RCLCPP_ERROR(this->get_logger(),
+						"MainNode -- failed to capture video frame");					
+						}
 
-                //bool render_success = display_->Render((uchar3*)image, 1280, 720);
-				//if (false == render_success) {
-				//	RCLCPP_ERROR(this->get_logger(), "failed to render video frame");	
-				//}
+				if ( ! network_->Detect((uchar3*)image, image_width.as_int(), image_height.as_int(), &detections, numDetections) ) {
+					RCLCPP_ERROR(this->get_logger(),
+						"MainNode -- failed to run object detection");	
+						}					
+
+				if ( ! overlay_->Render(image, image, image_width.as_int(), image_height.as_int(), detections, numDetections) ) {
+					RCLCPP_ERROR(this->get_logger(),
+						"MainNode -- failed to apply overlay on video frame");	
+						}
+
+				if ( ! display_->Render(image, image_width.as_int(), image_height.as_int()) ) {
+					RCLCPP_ERROR(this->get_logger(),
+						"MainNode -- failed to display video frame");	
+						}
 			}
 
 			stop_signal_ = false;
-			RCLCPP_INFO(this->get_logger(), "video processing thread stopped");});
+		});
 	}
 
     public:
 	~MainNode() {
 		stop_signal_ = true;
 		consumer_.join();
-		delete(image_converter_);
 	}
-
-	private:
-	std::unique_ptr<GstCamera> camera_;
-    std::unique_ptr<ViewStream> display_;
 
     private:
 	std::thread consumer_;
-	std::atomic<bool> stop_signal_;
-
-	private:
-	imageConverter* image_converter_;
-	imageConverter* image_converter_2_;
+	std::atomic<bool> stop_signal_ {false};
 };
 
 int main(int argc, char **argv)
@@ -106,7 +112,6 @@ int main(int argc, char **argv)
     executor.add_node(std::make_shared<MainNode>());
     executor.spin();
     rclcpp::shutdown();
-
 
 	return 0;
 }

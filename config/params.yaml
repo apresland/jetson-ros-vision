@@ -1,0 +1,25 @@
+composit:
+  ros__parameters:
+    csi_port: 0
+    image_width: 1280
+    image_height: 720
+    frame_rate: 120
+    flip_method: 2
+
+camera:
+  ros__parameters:
+    csi_port: 0
+    image_width: 1280
+    image_height: 720
+    frame_rate: 120
+    flip_method: 2
+
+detector:
+  ros__parameters:
+    image_width: 1280
+    image_height: 720
+
+display:
+  ros__parameters:
+    image_width: 1280
+    image_height: 720 

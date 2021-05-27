@@ -2,12 +2,12 @@
 #ifndef __GL_VIEWPORT_H__
 #define __GL_VIEWPORT_H__
 
+#include <memory>
+#include <time.h>
+#include <vector>
 
 #include <GL/glew.h>
 #include <GL/glx.h>
-
-#include <time.h>
-#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 #include "gltexture.h"
@@ -16,12 +16,11 @@ class ViewStream
 {
 
 public:
-	ViewStream* Create(rclcpp::Node *node);
 
 	ViewStream(rclcpp::Node *node);
 	~ViewStream();
 
-	bool Init();
+	bool Initialize();
 	virtual bool Open();
 	virtual bool Render( void* image, uint32_t width, uint32_t height);
 
@@ -42,7 +41,7 @@ private:
 	XVisualInfo* visual_;
 	Window       window_;
 	GLXContext   context_;
-    GLTexture*   texture_;
+    std::unique_ptr<GLTexture> texture_;
 
 	float    bgcolor_[4];
 

@@ -1,8 +1,6 @@
 #include "viewstream.h"
 #include "cuda.h"
 
-ViewStream* viewStream;
-
 static int fbAttribs[] =
 {
 		GLX_X_RENDERABLE, True,
@@ -29,8 +27,8 @@ ViewStream::ViewStream(rclcpp::Node *node)
 	window_       = 0;
 	screen_       = nullptr;
 	visual_       = nullptr;
-	context_  	  = nullptr;
 	display_      = nullptr;
+	texture_	  = nullptr;
 	initialized_  = false;
 
 	bgcolor_[0]    = 0.0f;
@@ -43,84 +41,46 @@ ViewStream::ViewStream(rclcpp::Node *node)
 // Destructor
 ViewStream::~ViewStream()
 {
-	if ( viewStream != nullptr )
-	{
-		delete viewStream;
-		viewStream = nullptr;
-	}
-
-	if( texture_ != nullptr )
-	{
-		delete texture_;
-		texture_ = nullptr;
-	}
-
 	// destroy the OpenGL context
 	glXDestroyContext(display_, context_);
 }
 	
-
-// Create
-ViewStream* ViewStream::Create(rclcpp::Node *node)
+bool ViewStream::Initialize()
 {
-	viewStream = new ViewStream(node);
-	
-	if( !viewStream )
-		return nullptr;
-		
-	if( !viewStream->Init() )
-	{
-		RCLCPP_INFO(node_->get_logger(),  "ViewStream -- failed to create X11 Window.");
-		delete viewStream;
-		return nullptr;
-	}
-	
-	GLenum err = glewInit();
-	
-	if (GLEW_OK != err)
-	{
-		RCLCPP_INFO(node_->get_logger(), "ViewStream -- OpenGL extension initialization failure: %s", glewGetErrorString(err));
-		delete viewStream;
-		return nullptr;
-	}
-
-	RCLCPP_INFO(node_->get_logger(), "ViewStream -- video stream display initialized.");
-	return viewStream;
-}
-
-// initWindow
-bool ViewStream::Init()
-{
-	if( ! CreateDisplay() )
-	{
-		RCLCPP_INFO(node_->get_logger(), "ViewStream -- no X11 server connection." );
+	if( ! CreateDisplay() ) {
+		RCLCPP_ERROR(node_->get_logger(), 
+			"ViewStream -- no X11 server connection." );
 		return false;
-	}
+			}
 	
-	if( ! CreateScreen(display_) )
-	{
-		RCLCPP_INFO(node_->get_logger(), "ViewStream -- failed to retrieve default screen.");
+	if( ! CreateScreen(display_) ) {
+		RCLCPP_ERROR(node_->get_logger(), 
+			"ViewStream -- failed to retrieve default screen.");
 		return false;
-	}
+			}
 	
-	if( ! CreateVisual(display_, screen_) )
-	{
-		RCLCPP_INFO(node_->get_logger(), "ViewStream -- failed to retrieve default visual.");
+	if( ! CreateVisual(display_, screen_) ) {
+		RCLCPP_ERROR(node_->get_logger(), 
+			"ViewStream -- failed to retrieve default visual.");
 		return false;
-	}
+			}
 
+	RCLCPP_INFO(node_->get_logger(), "ViewStream -- defining the X11 window attributes.");
 	Window winRoot = XRootWindowOfScreen(screen_);
-
 	XSetWindowAttributes winAttr;
 	winAttr.colormap = XCreateColormap(display_, winRoot, visual_->visual, AllocNone);
 	winAttr.background_pixmap = None;
 	winAttr.border_pixel = 0;
 
+	RCLCPP_INFO(node_->get_logger(), "ViewStream -- creating the X11 window.");
 	window_  = XCreateWindow(display_, winRoot, 0, 0, 1080, 720, 
 						0, visual_->depth, InputOutput, visual_->visual, 
 						CWBorderPixel|CWColormap|CWEventMask, &winAttr);
 
+	RCLCPP_INFO(node_->get_logger(), "ViewStream -- creating the X11 context.");
 	context_ = glXCreateContext(display_, visual_, 0, True);
+
+	RCLCPP_INFO(node_->get_logger(), "ViewStream -- attache the X11 window to the context.");
 	glXMakeCurrent(display_, window_, context_);
 
 	GLenum err = glewInit();
@@ -138,7 +98,7 @@ bool ViewStream::Init()
 
 bool ViewStream::CreateDisplay() 
 {
-	if( !display_ )
+	if( nullptr == display_ )
 		display_ = XOpenDisplay(0);
 
 	return display_ != nullptr ? true : false;	
@@ -146,21 +106,21 @@ bool ViewStream::CreateDisplay()
 
 bool ViewStream::CreateScreen(Display* display) 
 {
-	if ( !screen_ )
-		screen_ = XScreenOfDisplay(display, screenIdx);
+	if ( nullptr == screen_ )
+		screen_ = XScreenOfDisplay(display, DefaultScreen(display));
 
 	return screen_ != nullptr ? true : false;
 }
 
 bool ViewStream::CreateVisual(Display* display, Screen* screen) 
 {
-	if ( !visual_ ) {
+	if ( nullptr == visual_ ) {
 
 		// get framebuffer format
 		int fbCount = 0;
-		GLXFBConfig* fbConfig = glXChooseFBConfig(display, screenIdx, fbAttribs, &fbCount);
+		GLXFBConfig* fbConfig = glXChooseFBConfig(display, DefaultScreen(display), fbAttribs, &fbCount);
 
-		if( !fbConfig || fbCount == 0 )
+		if( ! fbConfig || fbCount == 0 )
 			return false;
 		
 		visual_ = glXGetVisualFromFBConfig(display, fbConfig[0]);
@@ -200,7 +160,7 @@ bool ViewStream::Render( void* image, uint32_t width, uint32_t height )
 	// obtain the OpenGL texture to use
 	GLTexture* renderTarget = AllocTexture(width, height);
 
-	if( !renderTarget )
+	if( ! renderTarget )
 		return false;
 
 	// draw the texture
@@ -214,14 +174,21 @@ bool ViewStream::Render( void* image, uint32_t width, uint32_t height )
 
 GLTexture* ViewStream::AllocTexture( uint32_t width, uint32_t height)
 {
-	if( width == 0 || height == 0 )
+	if ( texture_ ) {
+		return texture_.get();
+	}
+
+	if( width == 0 || height == 0 ) {
+		RCLCPP_ERROR(node_->get_logger(),
+			"ViewStream -- invalid texture demensions");
 		return nullptr;
+	}
 
-	if (texture_)
-		return texture_;
-
-	texture_ = new GLTexture(node_);
+	RCLCPP_INFO(node_->get_logger(), 
+		"ViewStream -- creating OpenGL texture instance");
+		
+	texture_ = std::make_unique<GLTexture>(node_);
 	texture_->Init(width, height);
 
-	return texture_;
+	return texture_.get();
 }

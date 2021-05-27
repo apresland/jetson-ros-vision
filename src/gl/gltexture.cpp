@@ -13,7 +13,7 @@ GLTexture::GLTexture(rclcpp::Node *node) :
 	width_(1280),
 	height_(720),
 	size_(width_ * height_ * glTextureLayoutChannels * glTextureTypeSize)
-{
+{	
 	gl_buffer_ = GLPixelBuffer::Create(size_, width_, height_);
 	cuda_buffer_ = std::make_unique<CUDAPixelBufferInterop>(node, gl_buffer_);
 }

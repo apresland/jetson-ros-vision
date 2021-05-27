@@ -4,7 +4,9 @@
 class ObjectDetection  : public rclcpp::Node {
 
     public:
-    ObjectDetection() : Node("object_detection", rclcpp::NodeOptions().use_intra_process_comms(true)) {
+    ObjectDetection() : Node("detector", rclcpp::NodeOptions().use_intra_process_comms(true)) {
+        this->declare_parameter("image_width");
+		this->declare_parameter("image_height");
         detector_ = std::make_unique<Detect>((rclcpp::Node*)this);
     }
 

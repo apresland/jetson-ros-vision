@@ -47,21 +47,19 @@ Network::~Network() {
 	}
 }
 
-void Network::Initialize() {
-
-    assert( initLibNvInferPlugins(&gLogger, "") );
-    LoadNetwork();
+bool Network::Initialize() {
+    assert( initLibNvInferPlugins(&gLogger, "") 
+		&& "Network::Initialize -- failed to initialize NVIDIA infererence plugins");
+	return LoadNetwork();
 } 
 
-Network::LayerBinding Network::RegisterBinding( const std::string& name)
+bool Network::RegisterBinding( Network::LayerBinding &binding, const std::string& name)
 {
-	RCLCPP_INFO(node_->get_logger(),
-		"registering binding for tensor, %s", name.c_str());
-
 	if( nullptr == bindings_ )
 	{
 		RCLCPP_ERROR(node_->get_logger(),
 			"cannot register binding - no memory allocated operation");
+		return false;
 	}
 
 	const int index = engine_->getBindingIndex(name.c_str());
@@ -70,6 +68,7 @@ Network::LayerBinding Network::RegisterBinding( const std::string& name)
 	{
 		RCLCPP_ERROR(node_->get_logger(),
 			"failed to get tensor binding index from CUDA engine");
+		return false;
 	}
 
 	nvinfer1::Dims dimensions = 
@@ -84,13 +83,12 @@ Network::LayerBinding Network::RegisterBinding( const std::string& name)
 	void* CPU  = nullptr;
 	void* CUDA = nullptr;
 
-	if( !cudaAllocMapped((void**)&CPU, (void**)&CUDA, size) )
+	if( ! cudaAllocMapped((void**)&CPU, (void**)&CUDA, size) )
 	{
 		RCLCPP_ERROR(node_->get_logger(),
-			"failed to alloc CUDA mapped memory for tensor input, %zu bytes", size);
+			"Network::RegisterBinding -- failed to allocate %zu bytes", size);
+		return false;
 	}
-
-	LayerBinding binding;
 
 	binding.name 	= name;
 	binding.index 	= index;
@@ -105,45 +103,80 @@ Network::LayerBinding Network::RegisterBinding( const std::string& name)
 
 	bindings_[binding.index] = binding.CUDA;
 
-	return binding;
+	RCLCPP_INFO(node_->get_logger(),
+		"Network::RegisterBinding -- registered  binding for tensor, %s", name.c_str());
+
+	return true;
 }
 
-void Network::CreateBindings(nvinfer1::ICudaEngine* engine)
+bool Network::CreateBindings(nvinfer1::ICudaEngine* engine)
 {
 	const int bytes = engine->getNbBindings() * sizeof(void*);
-
 	bindings_ = (void**)malloc(bytes);
 	memset(bindings_, 0, bytes);
 
-	input_binding_ 			= RegisterBinding("Input");
-	output_binding_ 		= RegisterBinding("NMS");
-	output_count_binding_ 	= RegisterBinding("NMS_1");
+	if ( ! RegisterBinding(input_binding_, "Input") ) {
+		RCLCPP_ERROR(node_->get_logger(),
+			"Network::CreatBindings - failed to register layer [Input]");
+		return false;
+			}
+
+	if ( ! RegisterBinding(output_binding_, "NMS") ) {
+		RCLCPP_ERROR(node_->get_logger(),
+			"Network::CreatBindings - failed to register layer [NMS]");
+		return false;
+			}
+
+	if ( ! RegisterBinding(output_count_binding_, "NMS_1") ) {
+		RCLCPP_ERROR(node_->get_logger(),
+			"Network::CreatBindings - failed to register layer [NMS_1]");
+		return false;
+			}
+
+	return true;
 }
 
-void Network::LoadNetwork()
+bool Network::LoadNetwork()
 {
 	/*
 	 * setup TensorRT engine
 	 */
 	engine_ = InferenceEngine::Create();
-    RCLCPP_INFO(node_->get_logger(),
-		"finished creating engine");
+	if ( nullptr == engine_ ) {
+		RCLCPP_INFO(node_->get_logger(),
+			"Network::LoadNetwork -- finished creating engine");
+		return false;
+			}
 
 	/*
 	 * setup TensorRT execution context
 	 */
 	context_ = engine_->createExecutionContext();
-	RCLCPP_INFO(node_->get_logger(),
-		"created execution context");
+	if ( nullptr == context_ ) {
+		RCLCPP_INFO(node_->get_logger(),
+			"Network::LoadNetwork -- created execution context");
+		return false;
+			}
 
 	/*
 	 * setup tensor bindings
 	 */
-	this->CreateBindings(engine_);
-    RCLCPP_INFO(node_->get_logger(),
-		"finished defining bindings");
+	if ( ! CreateBindings(engine_) ) {
+    	RCLCPP_ERROR(node_->get_logger(),
+			"Network::LoadNetwork -- failed to create bindings");
+		return false;
+			}
 
-	this->AllocDetections();
+	/*
+	 * setup CUDA dections buffer
+	 */
+	if ( ! AllocDetections() ) {
+		RCLCPP_ERROR(node_->get_logger(),
+			"CUDA detection buffer allocation failed");
+		return false;
+			}
+
+	return true;
 }
 
 bool Network::AllocDetections() {
@@ -160,7 +193,8 @@ bool Network::AllocDetections() {
 	return true;	
 }
 
-int Network::Detect( uchar3* img_data, uint32_t img_width, uint32_t img_height, Detection** detections) {
+bool Network::Detect( uchar3* img_data, uint32_t img_width, uint32_t img_height, 
+	Detection** detections, uint32_t& numDetections) {
 
 	if( cudaSuccess != cudaTensorNormBGR(
 		img_data, img_width, img_height, 
@@ -168,16 +202,14 @@ int Network::Detect( uchar3* img_data, uint32_t img_width, uint32_t img_height, 
 		make_float2(-1.0f, 1.0f), NULL))
 	{
 		RCLCPP_ERROR(node_->get_logger(), "cudaTensorNormBGR() failed");
-		return -1;
+		return false;
 	}
 
 	if( ! context_->execute(1, bindings_) )
 	{
 		RCLCPP_ERROR(node_->get_logger(), "failed to execute TensorRT context");
-		return -1;
+		return false;
 	}
-
-
 
 	Detection* detection = mDetectionSets[0] + mDetectionSet * mMaxDetections;
 
@@ -190,7 +222,7 @@ int Network::Detect( uchar3* img_data, uint32_t img_width, uint32_t img_height, 
 		mDetectionSet = 0;
 
 
-	int numDetections = 0;
+	uint32_t numDets = 0;
 	const int rawDetections = *(int*)output_count_binding_.CPU;
 	const int rawParameters = DIMS_W(output_binding_.dims);
 
@@ -204,14 +236,16 @@ int Network::Detect( uchar3* img_data, uint32_t img_width, uint32_t img_height, 
 		if( object_data[2] < 0.5 /** detection threshold */)
 			continue;	
 
-		detection[numDetections].Confidence = object_data[2];
-		detection[numDetections].Left       = object_data[3] * img_width;
-		detection[numDetections].Top        = object_data[4] * img_height;
-		detection[numDetections].Right      = object_data[5] * img_width;
-		detection[numDetections].Bottom	 	= object_data[6] * img_height;
+		detection[numDets].Confidence = object_data[2];
+		detection[numDets].Left       = object_data[3] * img_width;
+		detection[numDets].Top        = object_data[4] * img_height;
+		detection[numDets].Right      = object_data[5] * img_width;
+		detection[numDets].Bottom	  = object_data[6] * img_height;
 
-		++numDetections;
+		++numDets;
 	}
 
-	return numDetections;
+	numDetections = numDets;
+
+	return true;
 }

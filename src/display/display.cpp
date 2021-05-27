@@ -10,10 +10,10 @@ X11Display::X11Display(rclcpp::Node *node) : node_(node) {
 
     RCLCPP_INFO(node_->get_logger(), "opening video output stream: %s");
 
-    //stream_ = ViewStream::Create(this);
-    stream_ = new ViewStream(node_);
+    stream_ = std::make_unique<ViewStream>(node_);
+    image_converter_ = std::make_unique<imageConverter>(node_);
 
-    if( ! stream_->Init() )
+    if( ! stream_->Initialize() )
     {
         RCLCPP_INFO(node_->get_logger(), "failed to initialize video output stream");
     }      
@@ -23,11 +23,9 @@ X11Display::X11Display(rclcpp::Node *node) : node_(node) {
         RCLCPP_INFO(node_->get_logger(), "failed to open video output display");
     }
 
-    image_converter_ = new imageConverter(node_);
-
-    if( !image_converter_ )
+    if( ! image_converter_->Initialize() )
     {
-        RCLCPP_INFO(node_->get_logger(),"failed to create imageConverter");
+        RCLCPP_INFO(node_->get_logger(),"failed to initialize imageConverter");
     }
 }
 

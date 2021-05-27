@@ -13,18 +13,18 @@ Detect::Detect(rclcpp::Node *node) : node_(node) {
 
     captured_publisher_ = publisher_;
 
-    input_ = new imageConverter(node_);
-    output_ = new imageConverter(node_);
-    overlay_ = new Overlay();
-    network_ = new Network(node_);
+    input_   = std::make_unique<imageConverter>(node_);
+    output_  = std::make_unique<imageConverter>(node_);
+    overlay_ = std::make_unique<Overlay>(node_);
+    network_ = std::make_unique<Network>(node_);
 
     initialized_ = false;
 }
 
 void Detect::Initialize() {
 
-    input_->Initialize(1280, 720);
-    output_->Initialize(1280, 720);
+    input_->Initialize();
+    output_->Initialize();
     overlay_->Initialize();
     network_->Initialize();
 
@@ -64,11 +64,13 @@ void Detect::subscription_callback(const sensor_msgs::msg::Image::UniquePtr inpu
 
     Network::Detection* detections = NULL;
 
-    const int numDetections = network_->Detect(
+    uint32_t numDetections = 0;
+    network_->Detect(
         input_->ImageGPU(), 
         input_->GetWidth(), 
         input_->GetHeight(),
-        &detections);
+        &detections,
+        numDetections);
      
     overlay_->Render(
         input_->ImageGPU(), output_->ImageGPU(), 

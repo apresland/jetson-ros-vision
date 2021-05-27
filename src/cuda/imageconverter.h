@@ -44,17 +44,17 @@ public:
 	/**
 	 * Initialize the memory if necessary
 	 */
-	bool Initialize( uint32_t width, uint32_t height);
+	bool Initialize();
 
 	/**
 	 * Retrieve the converted image width
 	 */
-	inline uint32_t GetWidth() const		{ return width_; }
+	inline uint32_t GetWidth() const		{ return width_.as_int(); }
 
 	/**
 	 * Retrieve the converted image height
 	 */
-	inline uint32_t GetHeight() const		{ return height_; }
+	inline uint32_t GetHeight() const		{ return height_.as_int(); }
 
 	/**
 	 * Retrieve the GPU pointer of the converted image
@@ -64,9 +64,9 @@ public:
 private:
 
 	rclcpp::Node *node_;
+	rclcpp::Parameter width_;
+	rclcpp::Parameter height_;	
 
-	uint32_t width_;
-	uint32_t height_;	
 	size_t   size_input_;
 	size_t   size_output_;
 

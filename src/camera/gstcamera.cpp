@@ -25,11 +25,11 @@ GstCamera::~GstCamera() {
 bool GstCamera::BuildLaunchStr()
 {
     std::ostringstream ss;
-    ss << "nvarguscamerasrc sensor-id=" << 0;
-    ss << " ! video/x-raw(memory:NVMM), width=(int)" << 1280 << ", height=(int)" << 720 << ", " 
-        << "framerate=" << (int)120<< "/1, "
+    ss << "nvarguscamerasrc sensor-id=" << GetPort();
+    ss << " ! video/x-raw(memory:NVMM), width=(int)" << GetImageWidth() << ", height=(int)" << GetImageHeight() << ", " 
+        << "framerate=" << (int)GetFrameRate()<< "/1, "
         << "format=(string)NV12";
-    ss << " ! nvvidconv flip-method=" << 2;
+    ss << " ! nvvidconv flip-method=" << GetFlipMethod();
     ss << " ! video/x-raw";
     ss << " ! appsink name=mysink";
     launchstr_ = ss.str();
@@ -50,9 +50,9 @@ GstFlowReturn GstCamera::on_new_sample(_GstAppSink* sink, void* user_data) {
     ((GstCamera*)user_data)->Acquire();
 }
 
-bool GstCamera::Create() {
+bool GstCamera::Initialize() {
 
-    if (!gst_is_initialized()) {
+    if ( ! gst_is_initialized()) {
         gst_init(nullptr, nullptr);
         RCLCPP_INFO(node_->get_logger(), "Gstreamer initialized");
     }
@@ -61,7 +61,7 @@ bool GstCamera::Create() {
     RCLCPP_INFO(node_->get_logger(), "gstCamera -- attempting to create device");
     
     // build pipeline string
-    if( !BuildLaunchStr() )
+    if( ! BuildLaunchStr() )
     {
         RCLCPP_INFO(node_->get_logger(), "gstCamera failed to build pipeline string");
         return false;
@@ -79,7 +79,7 @@ bool GstCamera::Create() {
 
     GstPipeline* pipeline = GST_PIPELINE(pipeline_);
 
-    if( !pipeline )
+    if( ! pipeline )
     {
         RCLCPP_INFO(node_->get_logger(), "gstCamera failed to cast GstElement into GstPipeline");
         return false;
@@ -88,7 +88,7 @@ bool GstCamera::Create() {
     // retrieve pipeline bus
     bus_ = gst_pipeline_get_bus(pipeline);
 
-    if( !bus_ )
+    if( ! bus_ )
     {
         RCLCPP_INFO(node_->get_logger(), "gstCamera failed to retrieve GstBus from pipeline");
         return false;
@@ -137,8 +137,6 @@ bool GstCamera::Open()
     is_streaming_ = true;
     return true;
 }
-
-void GstCamera::Restart() { Create(); }
 
 #define release_return { gst_sample_unref(gstSample); return; }
 
@@ -260,6 +258,8 @@ bool GstCamera::Process(void** output) {
     if (!Open())
         RCLCPP_INFO(node_->get_logger(), "Failed to open video stream");
 
+
+
     std::unique_lock<std::mutex> lock(mutex_);
     condition_.wait(lock);
 
@@ -272,7 +272,7 @@ bool GstCamera::Process(void** output) {
     }
 
 	// allocate ringbuffer for colorspace conversion
-	const size_t rgbBufferSize = ImageFormatSize(1280, 720);
+	const size_t rgbBufferSize = ImageFormatSize(GetImageWidth(), GetImageHeight());
 
 	if( !buffer_rgb_.Allocate(rgbBufferSize))
 	{
@@ -283,7 +283,7 @@ bool GstCamera::Process(void** output) {
 	// perform colorspace conversion
 	void* nextRGB = buffer_rgb_.Write();
 
-	if( cudaSuccess != cudaNV12ToRGB(latestYUV, (uchar3*)nextRGB, 1280, 720))
+	if( cudaSuccess != cudaNV12ToRGB(latestYUV, (uchar3*)nextRGB, GetImageWidth(), GetImageHeight()))
 	{
 		RCLCPP_INFO(node_->get_logger(), "failed to convert NV12 -> RGB");
 		return false;

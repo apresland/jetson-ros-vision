@@ -27,12 +27,10 @@ class Detect {
     std::weak_ptr<rclcpp::Publisher<sensor_msgs::msg::Image>> captured_publisher_;
 
     private:
-    imageConverter* input_;
-    imageConverter* output_;
-
-    private:
-    Overlay* overlay_;
-    Network* network_;
+    std::unique_ptr<imageConverter> input_;
+    std::unique_ptr<imageConverter> output_;
+    std::unique_ptr<Overlay> overlay_;
+    std::unique_ptr<Network> network_;
 
     private:
     bool initialized_;

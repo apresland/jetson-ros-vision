@@ -10,23 +10,40 @@ class VideoPublisher : public rclcpp::Node
 {
 	public:
 	VideoPublisher() : Node("camera", rclcpp::NodeOptions().use_intra_process_comms(true)) {
-		camera_ = std::make_unique<GstCamera>((rclcpp::Node*)this);
-		image_converter_ = new imageConverter(this);
+
+		this->declare_parameter("csi_port");
+		this->declare_parameter("image_width");
+		this->declare_parameter("image_height");
+		this->declare_parameter("frame_rate");
+		this->declare_parameter("flip_method");
+
     	publisher_ = this->create_publisher<sensor_msgs::msg::Image>("raw_image", 5);
     	captured_publisher_ = publisher_;
 		stop_signal_ = false;
+
 		consumer_ = std::thread([this]() {
+
+			camera_ = std::make_unique<GstCamera>((rclcpp::Node*)this);
+			image_converter_ = std::make_unique<imageConverter>((rclcpp::Node*)this);
 			
-			RCLCPP_INFO(this->get_logger(), "video processing thread running");
-			camera_->Restart();
+			RCLCPP_INFO(this->get_logger(), "VideoPublisher -- initializing video camera");
+
+			if( ! image_converter_->Initialize() )
+			{
+				RCLCPP_ERROR(this->get_logger(), 
+					"VideoPublisher -- failed to initialize image converter");
+				std::terminate();
+					}
+
+			if ( ! camera_->Initialize() ) {
+				RCLCPP_ERROR(this->get_logger(), 
+					"VideoPublisher -- failed to initialize video input");
+				std::terminate();
+					}
+
+			RCLCPP_INFO(this->get_logger(), "VideoPublisher -- starting video capture");
 
 			while ( false == stop_signal_ && rclcpp::ok()) {
-
-
-				if( !image_converter_->Initialize(1280, 720) )
-				{
-					RCLCPP_INFO(this->get_logger(), "failed to resize camera image converter");
-				}
 
 				void* img = nullptr;
 				camera_->Process(&img);
@@ -34,7 +51,7 @@ class VideoPublisher : public rclcpp::Node
 
 				if( !image_converter_->ConvertToSensorMessage(*(msg.get()), (uchar3*)img))
 				{
-					RCLCPP_INFO(this->get_logger(), "failed to convert video stream frame to sensor_msgs::Image");
+					RCLCPP_INFO(this->get_logger(), "VideoPublisher -- failed to convert video stream frame to ROS sensor message");
 				}
 
 				msg->header.stamp = this->now();
@@ -44,22 +61,21 @@ class VideoPublisher : public rclcpp::Node
 			}
 
 			stop_signal_ = false;
-			RCLCPP_INFO(this->get_logger(), "video processing thread stopped");});
+			RCLCPP_INFO(this->get_logger(), "VideoPublisher -- video processing thread stopped");});
 	}
 
 	~VideoPublisher() {
 		stop_signal_ = true;
 		consumer_.join();
-		delete(image_converter_);
 	}
 
 	private:
 	std::unique_ptr<GstCamera> camera_;
+	std::unique_ptr<imageConverter> image_converter_;
 	std::thread consumer_;
 	std::atomic<bool> stop_signal_;
 
 	private:
-	imageConverter* image_converter_;
     std::shared_ptr<rclcpp::Publisher<sensor_msgs::msg::Image>> publisher_;
     std::weak_ptr<rclcpp::Publisher<sensor_msgs::msg::Image>> captured_publisher_;
 };

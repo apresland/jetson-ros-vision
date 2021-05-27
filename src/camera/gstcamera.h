@@ -31,18 +31,53 @@ class GstCamera {
 	static GstFlowReturn on_new_sample(_GstAppSink* sink, void* user_data);
 
     public:
-    bool Create();
+    bool Initialize();
     bool Open();
-    void Restart();
     void Acquire();
     bool Process(void** output);
 
     public:
-    void SetPublish(bool publish) {publish_ = publish;};
+    void SetPublish(bool publish) {
+        publish_ = publish;
+    };
+
+    private:
+    size_t GetPort() {
+        rclcpp::Parameter camera_port
+            = node_->get_parameter("csi_port");
+        return camera_port.as_int();
+    };
+
+    private:
+    size_t GetImageWidth() {
+        rclcpp::Parameter image_width
+            = node_->get_parameter("image_width");
+        return image_width.as_int();
+    };
+
+    private:
+    size_t GetImageHeight() {
+        rclcpp::Parameter image_height
+            = node_->get_parameter("image_height");
+        return image_height.as_int();
+    };
+
+    private:
+    size_t GetFrameRate() {
+        rclcpp::Parameter camera_frame_rate
+            = node_->get_parameter("frame_rate");
+        return camera_frame_rate.as_int();
+    }; 
+
+    private:
+    size_t GetFlipMethod() {
+        rclcpp::Parameter camera_flip_method
+            = node_->get_parameter("flip_method");
+        return camera_flip_method.as_int();
+    }; 
 
     typedef uchar3 PixelType; // IMAGE_RGB8
 
-    // imageFormatSize
     inline size_t ImageFormatSize( size_t width, size_t height )
     {
         return (width * height * sizeof(uchar3) * 8) / 8;
@@ -73,6 +108,8 @@ class GstCamera {
 
     private:
     rclcpp::Node *node_;
+    uint32_t image_width_;
+    uint32_t image_height_;
 };
 
 #endif
