@@ -8,9 +8,12 @@ The system stack comprises:
 * **OpenGL** with **CUDA** iterop: accelerate graphics rendering.
 * **ROS2**: provides the application framework.
 
-The NVIDIA Jetson Nano specs are:
+## NVIDIA Jetson Nano
+Specifications:
 * **GPU**: 128-core Maxwell
 * **CPU**: Quad-core ARM A57 @ 1.43 GHz
 * **Memory**:  4 GB 64-bit LPDDR4 25.6 GB/s
 
-The NVIDIA Jetson are low-popwered embedded systems aimed at accelerating machine learning applictions. These can include robotics, automonous systems and smart devices.
+The NVIDIA Jetson Nano is a low-popwered embedded systems aimed at accelerating machine learning applictions. These can include robotics, automonous systems and smart devices. The Nano is the most constrained of the Jetson series of devices and offers the weakest performance but by careful design it can acheive realtime inference. 
+
+![jetson_nano](https://user-images.githubusercontent.com/5468707/120195053-9fc18780-c21e-11eb-8637-029555cdb467.png)
