@@ -1,7 +1,21 @@
 # Realtime-Object-Detection (Jetson Nano) 
 On-device real-time object detection at **40 FPS** from a 720p video stream using GPU acceleration on NVIDIA Jetson. The solution employs TensorRT to deploy a neural network with improved performance and power efficiency using graph optimizations, kernel fusion, and FP16 precision.
 
-The system stack comprises:
+## Object detection
+Object detection is a computer vision technique that allows simultaneous identification and localization of objects in images. When applied to video streams this identification and localization can be used to count objects in a scene and to determine and track their precise locations. Although our visual cortex achieves this effortlessly it is a computationaly intensive task and any CPU based system will struggle to achieve a 30 FPS real-time inference rate. Fortunately the parallel structure of GPU can help us attain real-time performance even on embedded systems.
+
+### Single-Shot-Detectors
+Single-Shot-Detectors (SSDs) are a type of neural network that use a set of predetermined regions to detect objects. A grid of anchor points is laid over the input image, and at each anchor point boxes of various dimensions are defined. For each box at each anchor point, the model outputs a prediction of whether or not an object exists within the region. Because there are multiple boxes at each anchor point and anchor points may be close together, SSDs produce detections that overlap. Post-processing (non-maximum suppression) is applied in order to prune away most predictions and pick the best one.
+
+### Object Detection on the Edge
+Running object detection on the edge in realtime requires special consideration
+* Choose networks that include fewer convolution blocks.
+* Minimize the number of parameters in the network (e.g. number of filters in a convolution layer)
+* Quantizing model weights to save space (e.g. FP16 instead of FP32).
+* Limit network input and output sizes by training models at modest resolution and downscaling input at runtime.
+
+## Technology stack
+Frameworks:
 * **GStreamer**: capture video from the onboard CSI camera at 1280x720 resolution.
 * **CUDA**: accelerate colorspace conversion of video input/output.
 * **TensorRT**: accelerate inference from a SSD network with MobileNetV2 backbone.
