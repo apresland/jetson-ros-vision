@@ -1,9 +1,8 @@
 
-https://user-images.githubusercontent.com/5468707/121009098-0a7d4080-c794-11eb-8b06-7aca7cb32625.mp4
+![ssd_mobilenet_1](https://user-images.githubusercontent.com/5468707/121191122-f442b380-c86b-11eb-8f42-837ca877fc29.gif)
 
 
-
-# Realtime-Object-Detection (Jetson Nano) 
+# Realtime-Object-Detection (Jetson Nano : 40 FPS) 
 On-device real-time object detection at **40 FPS** from a 720p video stream using GPU acceleration on NVIDIA Jetson. The solution employs TensorRT to deploy a neural network with improved performance and power efficiency using graph optimizations, kernel fusion, and FP16 precision.
 
 ## Object detection
