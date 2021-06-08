@@ -1,5 +1,7 @@
 
 ![ssd_mobilenet_1](https://user-images.githubusercontent.com/5468707/121191122-f442b380-c86b-11eb-8f42-837ca877fc29.gif)
+![ssd_mobilenet_2](https://user-images.githubusercontent.com/5468707/121210433-f6147300-c87b-11eb-85b0-aa750cc6ec38.gif)
+
 
 
 # Realtime-Object-Detection (Jetson Nano : 40 FPS) 
