@@ -20,16 +20,14 @@ source ./install/setup.bash
 ```
 #### Run single-node at ~40 FPS
 ```
-ros2 run jetson-ros-vision detect --ros-args --params-file ./config/params.yaml
+ros2 run jetson-ros-vision single_node --ros-args --params-file ./config/params.yaml
 ```
 
 #### Run multi-node at ~20 FPS
 ```
-ros2 run jetson-ros-vision capture --ros-args --params-file ./config/params.yaml
-ros2 run jetson-ros-vision inference --ros-args --params-file ./config/params.yaml
-ros2 run jetson-ros-vision display --ros-args --params-file ./config/params.yaml
+ros2 run jetson-ros-vision multi_node --ros-args --params-file ./config/params.yaml
 ```
-Note: The first execution will parse the UFF file and create the TensorRT engine which will take some time. Subsequently the engine will be loaded from cache and startup will be quicker but still not fast!
+*Note:* The first execution will parse the UFF file and create the TensorRT engine which will take some time. Subsequently the engine will be loaded from cache and startup will be quicker but still not fast!
 
 ## Object Detection
 
