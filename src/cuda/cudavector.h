@@ -28,17 +28,7 @@
 // vector overloads
 #include "cudamath.h"
 
-// static assertion
 #include <type_traits>
-
-
-//////////////////////////////////////////////////////////////////////////////////
-/// @name Vector Templates
-/// @internal
-/// @ingroup cuda
-//////////////////////////////////////////////////////////////////////////////////
-
-///@{
 
 // get base type (uint8 or float) from vector
 template<class T> struct cudaVectorTypeInfo;
@@ -55,12 +45,13 @@ template<> inline __host__ __device__ uchar3 make_vec( uint8_t x, uint8_t y, uin
 
 // cast_vec<T> templates
 template<typename T> inline __host__ __device__ T cast_vec( const uchar3& a )				{ static_assert(cuda_assert_false<T>::value, "invalid vector type - supported types are uchar3, uchar4, float3, float4");  }
+template<typename T> inline __host__ __device__ T cast_vec( const float4& a )				{ static_assert(cuda_assert_false<T>::value, "invalid vector type - supported types are uchar3, uchar4, float3, float4");  }
 template<> inline __host__ __device__ uchar3 cast_vec( const uchar3& a )					{ return make_uchar3(a); }
+template<> inline __host__ __device__ float4 cast_vec( const uchar3& a )					{ return make_float4(a); }
+template<> inline __host__ __device__ uchar3 cast_vec( const float4& a )					{ return make_uchar3(a); }
 
 // extract alpha color component
 template<typename T> inline __device__ typename cudaVectorTypeInfo<T>::Base alpha( T vec, typename cudaVectorTypeInfo<T>::Base default_alpha=255 )	{ static_assert(cuda_assert_false<T>::value, "invalid vector type - supported types are uchar3, uchar4, float3, float4");  }
 template<> inline __host__ __device__ uint8_t alpha( uchar3 vec, uint8_t default_alpha )		{ return default_alpha; }
-
-///@}
 
 #endif

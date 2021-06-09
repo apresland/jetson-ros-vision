@@ -11,17 +11,17 @@ class VideoPublisher : public rclcpp::Node
 	public:
 	VideoPublisher() : Node("camera", rclcpp::NodeOptions().use_intra_process_comms(true)) {
 
-		this->declare_parameter("csi_port");
-		this->declare_parameter("image_width");
-		this->declare_parameter("image_height");
-		this->declare_parameter("frame_rate");
-		this->declare_parameter("flip_method");
-
     	publisher_ = this->create_publisher<sensor_msgs::msg::Image>("raw_image", 5);
     	captured_publisher_ = publisher_;
 		stop_signal_ = false;
 
 		consumer_ = std::thread([this]() {
+
+			this->declare_parameter("csi_port");
+			this->declare_parameter("image_width");
+			this->declare_parameter("image_height");
+			this->declare_parameter("frame_rate");
+			this->declare_parameter("flip_method");
 
 			camera_ = std::make_unique<GstCamera>((rclcpp::Node*)this);
 			image_converter_ = std::make_unique<imageConverter>((rclcpp::Node*)this);

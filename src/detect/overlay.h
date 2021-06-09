@@ -1,6 +1,7 @@
 #pragma once
 
 #include "network.h"
+#include "details.h"
 
 class Overlay {
 
@@ -18,6 +19,8 @@ class Overlay {
 
     private:
     rclcpp::Node *node_;
+    Details *font_;
+    std::map<int,int> color_dictionary;
 
     private:
     float* mClassColors[2];

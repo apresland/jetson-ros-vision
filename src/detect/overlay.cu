@@ -24,7 +24,17 @@ __global__ void gpuDetectionOverlayBox(
 
 	T px = input[ y * imgWidth + x ];
 
-	const float alpha = color.w / 255.0f;
+	float alpha = color.w / 255.0f;
+	if (box_x < 240 && box_y < 30) {
+		alpha = 1.0f;
+	}
+	if ( box_x < 2 || box_y < 2) {
+		alpha = 1.0f;
+	}
+	if ( boxWidth - box_x < 2 || boxHeight - box_y < 2) {
+		alpha = 1.0f;
+	}
+
 	const float ialph = 1.0f - alpha;
 
 	px.x = alpha * color.x + ialph * px.x;
@@ -40,7 +50,8 @@ cudaError_t launchDetectionOverlay(
 	uint32_t width, uint32_t height, 
 	Network::Detection* detections, 
 	uint32_t numDetections, 
-	float4* colors)
+	float4* colors,
+	std::map<int,int> &colormap)
 {
 	if( !input || !output || width == 0 || height == 0 )
 		return cudaErrorInvalidValue;
@@ -50,18 +61,26 @@ cudaError_t launchDetectionOverlay(
 		const int boxWidth = (int)detections[n].Width();
 		const int boxHeight = (int)detections[n].Height();
 
+		const float4 color = colors[
+			colormap.find(detections[n].ClassId)
+				->second
+			];
+
 		const dim3 blockDim(8, 8);
 		const dim3 gridDim(
 			iDivUp(boxWidth, blockDim.x),
 			iDivUp(boxHeight,blockDim.y));
 
-		gpuDetectionOverlayBox<T><<<gridDim, blockDim>>>(input, output, width, height, (int)detections[n].Left, (int)detections[n].Top, boxWidth, boxHeight, colors[1]); 
+		gpuDetectionOverlayBox<T><<<gridDim, blockDim>>>(input, output, width, height, (int)detections[n].Left, (int)detections[n].Top, boxWidth, boxHeight, color); 
 	}
 
 	return cudaGetLastError();
 }
 
-cudaError_t cudaDetectionOverlay( void* input, void* output, uint32_t width, uint32_t height, Network::Detection* detections, uint32_t numDetections, float4* colors)
+cudaError_t cudaDetectionOverlay( 
+	void* input, void* output, uint32_t width, uint32_t height, 
+	Network::Detection* detections, uint32_t numDetections, float4* colors,
+	std::map<int,int> &colormap)
 {
-    return launchDetectionOverlay<uchar3>((uchar3*)input, (uchar3*)output, width, height, detections, numDetections, colors); 
+    return launchDetectionOverlay<uchar3>((uchar3*)input, (uchar3*)output, width, height, detections, numDetections, colors, colormap); 
 }

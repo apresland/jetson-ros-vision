@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <array>
+#include <algorithm>
 #include <map>
 #include <NvInfer.h>
 #include "cuda_runtime.h"
@@ -29,12 +31,12 @@ class Network {
     public:
 	struct Detection
 	{
+        uint32_t ClassId;
 		float Confidence;
 		float Left;
 		float Right;
 		float Top;
 		float Bottom;
-
 
 		/**< Calculate the width of the object */
 		inline float Width() const { return Right - Left; }
@@ -72,6 +74,11 @@ class Network {
         uchar3* input, uchar3* output, uint32_t width, uint32_t height,
         Detection* detections, uint32_t numDetections);
 
+    template<typename C, typename T>
+    bool contains(C&& c, T e) { 
+        return std::find(std::begin(c), std::end(c), e) != std::end(c);
+    };
+
     private:
     rclcpp::Node *node_;
 
@@ -89,4 +96,7 @@ class Network {
 	uint32_t   mMaxDetections;
 
 	static const uint32_t mNumDetectionSets = 16;
+
+    private:
+    //std::array<int, 7> target_classes_ { 1, 72, 74, 76, 87, 88 };
 };

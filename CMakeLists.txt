@@ -32,52 +32,52 @@ endif()
 
 
 
-add_executable( detect
+add_executable( multi_node
     src/ros/main.cpp
     src/camera/gstcamera.cpp src/cuda/imageconverter.cpp src/cuda/cudayuv.cu src/cuda/cudargb.cu
-    src/detect/detect.cpp src/detect/network.cpp src/detect/engine.cpp src/detect/overlay.cpp src/detect/overlay.cu src/detect/logger.cpp src/plugins/FlattenConcat.cpp src/cuda/imageconverter.cpp src/cuda/cudargb.cu src/cuda/tensorconvert.cu
+    src/detect/detect.cpp src/detect/network.cpp src/detect/engine.cpp src/detect/overlay.cpp src/detect/overlay.cu src/detect/details.cu src/detect/logger.cpp src/plugins/FlattenConcat.cpp src/cuda/imageconverter.cpp src/cuda/cudargb.cu src/cuda/tensorconvert.cu
     src/display/display.cpp src/display/viewstream.cpp src/cuda/imageconverter.cpp src/cuda/cudargb.cu src/cuda/cudapixelbufferinterop.cpp src/gl/gltexture.cpp src/gl/glpixelbuffer.cpp
     )
 
-target_include_directories(detect 
+target_include_directories(multi_node 
     PRIVATE src/ros src/cuda src/detect src/camera src/display src/gl
     )
 
-target_link_libraries(detect 
+target_link_libraries(multi_node 
     GL GLU GLEW X11 gstreamer-1.0 gstapp-1.0 gstpbutils-1.0 gobject-2.0 nvinfer nvinfer_plugin nvcaffe_parser cublas ${catkin_LIBRARIES} ${CUDA_LIBRARIES}
     )
 
-ament_target_dependencies(detect 
+ament_target_dependencies(multi_node 
     rclcpp std_msgs sensor_msgs vision_msgs
     )
 
-install(TARGETS detect DESTINATION lib/${PROJECT_NAME})
+install(TARGETS multi_node DESTINATION lib/${PROJECT_NAME})
 
 # ros launchers
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 
 
 
-add_executable( detect2
+add_executable( single_node
     src/main.cpp
     src/camera/gstcamera.cpp src/cuda/imageconverter.cpp src/cuda/cudayuv.cu src/cuda/cudargb.cu
-    src/detect/detect.cpp src/detect/network.cpp src/detect/engine.cpp src/detect/overlay.cpp src/detect/overlay.cu src/detect/logger.cpp src/plugins/FlattenConcat.cpp src/cuda/imageconverter.cpp src/cuda/cudargb.cu src/cuda/tensorconvert.cu
+    src/detect/detect.cpp src/detect/network.cpp src/detect/engine.cpp src/detect/overlay.cpp src/detect/overlay.cu src/detect/details.cu src/detect/logger.cpp src/plugins/FlattenConcat.cpp src/cuda/imageconverter.cpp src/cuda/cudargb.cu src/cuda/tensorconvert.cu
     src/display/display.cpp src/display/viewstream.cpp src/cuda/cudargb.cu src/cuda/cudapixelbufferinterop.cpp src/gl/gltexture.cpp src/gl/glpixelbuffer.cpp
     )
 
-target_include_directories(detect2 
+target_include_directories(single_node
     PRIVATE src/ros src/cuda src/detect src/camera src/display src/gl
     )
 
-target_link_libraries(detect2 
+target_link_libraries(single_node
     GL GLU GLEW X11 gstreamer-1.0 gstapp-1.0 gstpbutils-1.0 gobject-2.0 nvinfer nvinfer_plugin nvcaffe_parser cublas ${catkin_LIBRARIES} ${CUDA_LIBRARIES}
     )
 
-ament_target_dependencies(detect2 
+ament_target_dependencies(single_node
     rclcpp std_msgs sensor_msgs vision_msgs
     )
 
-install(TARGETS detect2 DESTINATION lib/${PROJECT_NAME})
+install(TARGETS single_node DESTINATION lib/${PROJECT_NAME})
 
 
 ament_package()

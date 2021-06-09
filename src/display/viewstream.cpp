@@ -53,13 +53,13 @@ bool ViewStream::Initialize()
 		return false;
 			}
 	
-	if( ! CreateScreen(display_) ) {
+	if( ! CreateScreen() ) {
 		RCLCPP_ERROR(node_->get_logger(), 
 			"ViewStream -- failed to retrieve default screen.");
 		return false;
 			}
 	
-	if( ! CreateVisual(display_, screen_) ) {
+	if( ! CreateVisual() ) {
 		RCLCPP_ERROR(node_->get_logger(), 
 			"ViewStream -- failed to retrieve default visual.");
 		return false;
@@ -104,26 +104,37 @@ bool ViewStream::CreateDisplay()
 	return display_ != nullptr ? true : false;	
 }
 
-bool ViewStream::CreateScreen(Display* display) 
+bool ViewStream::CreateScreen() 
 {
-	if ( nullptr == screen_ )
-		screen_ = XScreenOfDisplay(display, DefaultScreen(display));
+	if( nullptr == display_ ) {
+		RCLCPP_ERROR(node_->get_logger(),
+			"ViewStream::CreateScreen -- X11 Display is undefined while creating screen");	
+		return false;
+	}
+
+	if ( nullptr == screen_ ) {
+		screen_ = XScreenOfDisplay(display_, DefaultScreen(display_));
+		RCLCPP_INFO(node_->get_logger(),
+			"ViewStream::CreateScreen -- Created X11 screen");
+	}
 
 	return screen_ != nullptr ? true : false;
 }
 
-bool ViewStream::CreateVisual(Display* display, Screen* screen) 
+bool ViewStream::CreateVisual() 
 {
+	if( nullptr == display_ ) {
+		RCLCPP_ERROR(node_->get_logger(),
+			"ViewStream::CreateVisual -- X11 Display is undefined while creating visual");	
+		return false;
+	}
+
 	if ( nullptr == visual_ ) {
-
-		// get framebuffer format
 		int fbCount = 0;
-		GLXFBConfig* fbConfig = glXChooseFBConfig(display, DefaultScreen(display), fbAttribs, &fbCount);
-
+		GLXFBConfig* fbConfig = glXChooseFBConfig(display_, DefaultScreen(display_), fbAttribs, &fbCount);
 		if( ! fbConfig || fbCount == 0 )
 			return false;
-		
-		visual_ = glXGetVisualFromFBConfig(display, fbConfig[0]);
+		visual_ = glXGetVisualFromFBConfig(display_, fbConfig[0]);
 		XFree(fbConfig);
 	}
 

@@ -27,8 +27,8 @@ public:
 private:
 
 	bool CreateDisplay();
-	bool CreateScreen(Display* display);
-	bool CreateVisual(Display* display, Screen* screen);
+	bool CreateScreen();
+	bool CreateVisual();
 
 	GLTexture* AllocTexture( uint32_t width, uint32_t height);
 

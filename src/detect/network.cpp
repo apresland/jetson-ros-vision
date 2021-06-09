@@ -50,6 +50,7 @@ Network::~Network() {
 bool Network::Initialize() {
     assert( initLibNvInferPlugins(&gLogger, "") 
 		&& "Network::Initialize -- failed to initialize NVIDIA infererence plugins");
+
 	return LoadNetwork();
 } 
 
@@ -230,12 +231,13 @@ bool Network::Detect( uchar3* img_data, uint32_t img_width, uint32_t img_height,
 	{
 		float* object_data = output_binding_.CPU + n * rawParameters;
 
-		if( (uint32_t)object_data[1] != 1 )
+		if ( ! contains( node_->get_parameter("target_classes").as_integer_array() /*target_classes_*/, (int)object_data[1]))
+			continue;
+
+		if( object_data[2] < 0.66 /** detection threshold */)
 			continue;	
 
-		if( object_data[2] < 0.5 /** detection threshold */)
-			continue;	
-
+		detection[numDets].ClassId 	  = (uint32_t)object_data[1];
 		detection[numDets].Confidence = object_data[2];
 		detection[numDets].Left       = object_data[3] * img_width;
 		detection[numDets].Top        = object_data[4] * img_height;

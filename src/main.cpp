@@ -27,6 +27,8 @@ class MainNode : public rclcpp::Node
 		this->declare_parameter("image_height");
 		this->declare_parameter("frame_rate");
 		this->declare_parameter("flip_method");
+		this->declare_parameter("target_classes");
+		this->declare_parameter("class_labels");
 
 		consumer_ = std::thread([this]() {
 
