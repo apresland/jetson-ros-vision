@@ -8,6 +8,16 @@ Real-time object detection"on-the-edge" at **40 FPS** from 720p video streams.
 **Jetson Nano** is a very low power device but is equipped with an NVIDIA GPU.
 **TensorRT** can be used to optimize a neural network for GPU achieving enough performance improvement and power efficiency to run inference on the Nano in real-time. **TensorRT** is built on **CUDA**, NVIDIA’s parallel programming model, providing optimized inference for artificial intelligence, autonomous machines, high-performance computing, and graphics using graph optimizations, kernel fusion, and quantization.
 
+## NVIDIA Jetson Nano
+Specifications:
+* **GPU**: 128-core Maxwell
+* **CPU**: Quad-core ARM A57 @ 1.43 GHz
+* **Memory**:  4 GB 64-bit LPDDR4 25.6 GB/s
+
+The NVIDIA Jetson Nano is a low-popwered embedded systems aimed at accelerating machine learning applictions. These can include robotics, automonous systems and smart devices. The Nano is the most constrained of the Jetson series of devices and offers the weakest performance but by careful design it can acheive realtime inference. 
+
+![jetson_nano](https://user-images.githubusercontent.com/5468707/120195053-9fc18780-c21e-11eb-8637-029555cdb467.png)
+
 ## Quickstart
 
 The example is built using **Robotic Operating System** (ROS2) to provide a modular structure, interprocess communication and a distributed parameter system. Video frames are captured at 1280x720 from the **CSI** camera with a **GStreamer** pipeline and are color converted from raw NVMM video data from YuV to RGB using **CUDA** before being passed upstream. In a prior step a pre-trained PyTorch model is converted to UFF format so that it can be imported into **TensorRT**. After that the inference takes place entirely on the GPU and uses GPU RAM. The output of inference (bounding boxes for the detected objects and associated confidence level) is sent to a **OpenGL** display accelerated with **CUDA** interop. At each stage buffers are used to improve throughput.
@@ -50,16 +60,6 @@ TensorRT is NVIDIA’s highly optimized neural network inference framework which
 * Build a TensorRT runtime engine which optimizes the network for the specific GPU and serialized to disk for later inference.
 * Create a TensorRT execution context specifying and dimensions left “dynamic” in the engine.
 * Use the execution context to run the network.
-
-## NVIDIA Jetson Nano
-Specifications:
-* **GPU**: 128-core Maxwell
-* **CPU**: Quad-core ARM A57 @ 1.43 GHz
-* **Memory**:  4 GB 64-bit LPDDR4 25.6 GB/s
-
-The NVIDIA Jetson Nano is a low-popwered embedded systems aimed at accelerating machine learning applictions. These can include robotics, automonous systems and smart devices. The Nano is the most constrained of the Jetson series of devices and offers the weakest performance but by careful design it can acheive realtime inference. 
-
-![jetson_nano](https://user-images.githubusercontent.com/5468707/120195053-9fc18780-c21e-11eb-8637-029555cdb467.png)
 
 ## Future Work
 This example provides a basis onto which further optimization and embedded vision tasks can be built. Examples are
