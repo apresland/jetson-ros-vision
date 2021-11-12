@@ -2,7 +2,7 @@
 ![ssd_mobilenet_1](https://user-images.githubusercontent.com/5468707/121191122-f442b380-c86b-11eb-8f42-837ca877fc29.gif)
 ![ssd_mobilenet_2](https://user-images.githubusercontent.com/5468707/121210433-f6147300-c87b-11eb-85b0-aa750cc6ec38.gif)
 
-# Embedded Object-Detection at 40 FPS using Neural Networks on Jetson Nano. 
+# Embedded Object-Detection at 40 FPS using MobileNetV2 SSD Neural Network and ROS on Jetson Nano. 
 Real-time object detection"on-the-edge" at **40 FPS** from 720p video streams.
 
 **Jetson Nano** is a very low power device but is equipped with an NVIDIA GPU.
